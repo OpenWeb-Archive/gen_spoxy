@@ -13,10 +13,7 @@ defmodule GenSpoxy.Store do
   """
   @callback store_req!(
               table_name :: String.t(),
-              req :: map(),
-              req_key :: term,
-              resp :: any,
-              metadata :: map(),
+              entry :: tuple,
               opts :: any
             ) :: any
 

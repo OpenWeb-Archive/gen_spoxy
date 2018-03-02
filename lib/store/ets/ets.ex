@@ -31,7 +31,7 @@ defmodule GenSpoxy.Stores.Ets do
   end
 
   @impl true
-  def store_req!(table_name, req, req_key, resp, metadata, opts) do
+  def store_req!(table_name, {req, req_key, resp, metadata}, opts) do
     partition = calc_req_partition(table_name)
 
     GenServer.call(

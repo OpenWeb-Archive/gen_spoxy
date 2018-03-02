@@ -76,8 +76,8 @@ defmodule GenSpoxy.Prerender do
           new_total_passive = total_passive + passive
 
           acc
-          |> Map.update(:total_listeners, new_total_listeners)
-          |> Map.update(:total_passive, new_total_passive)
+          |> Map.put(:total_listeners, new_total_listeners)
+          |> Map.put(:total_passive, new_total_passive)
         end)
       end
 
@@ -102,8 +102,8 @@ defmodule GenSpoxy.Prerender do
           new_total_passive = total_passive + Enum.count(passive)
 
           acc
-          |> Map.update(:total_listeners, new_total_listeners)
-          |> Map.update(:total_passive, new_total_passive)
+          |> Map.put(:total_listeners, new_total_listeners)
+          |> Map.put(:total_passive, new_total_passive)
         end)
       end
 

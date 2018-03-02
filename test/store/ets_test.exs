@@ -19,14 +19,9 @@ defmodule Spoxy.Stores.Ets.Tests do
   test "returns cached data if exists" do
     table_name = "table-ets-test-2"
 
-    Ets.store_req!(
-      table_name,
-      ["req-ets-test-2", "newest"],
-      "key-2",
-      "resp for req",
-      %{etag: 10},
-      ttl_ms: 10
-    )
+    entry = {["req-ets-test-2", "newest"], "key-2", "resp for req", %{etag: 10}}
+
+    Ets.store_req!(table_name, entry, ttl_ms: 10)
 
     lookup = Ets.lookup_req(table_name, "key-2")
     assert {"resp for req", %{etag: 10, uuid: _uuid}} = lookup
@@ -35,14 +30,9 @@ defmodule Spoxy.Stores.Ets.Tests do
   test "data invalidation" do
     table_name = "table-ets-test-3"
 
-    Ets.store_req!(
-      table_name,
-      ["req-ets-test-3", "newest"],
-      "key-3",
-      "resp for req",
-      %{etag: 10},
-      ttl_ms: 10
-    )
+    entry = {["req-ets-test-3", "newest"], "key-3", "resp for req", %{etag: 10}}
+
+    Ets.store_req!(table_name, entry, ttl_ms: 10)
 
     lookup = Ets.lookup_req(table_name, "key-3")
     assert {"resp for req", %{etag: 10, uuid: _uuid}} = lookup

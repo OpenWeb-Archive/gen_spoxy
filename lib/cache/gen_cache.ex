@@ -31,24 +31,16 @@ defmodule GenSpoxy.Cache do
 
       def async_get_or_fetch(req, opts \\ []) do
         req_key = calc_req_key(req)
+        mods = {@prerender_module, @store_module, @tasks_executor_mod}
 
-        Cache.async_get_or_fetch(
-          {@prerender_module, @store_module, @tasks_executor_mod},
-          req,
-          req_key,
-          opts
-        )
+        Cache.async_get_or_fetch(mods, req, req_key, opts)
       end
 
       def get_or_fetch(req, opts \\ []) do
         req_key = calc_req_key(req)
+        mods = {@prerender_module, @store_module, @tasks_executor_mod}
 
-        Cache.get_or_fetch(
-          {@prerender_module, @store_module, @tasks_executor_mod},
-          req,
-          req_key,
-          opts
-        )
+        Cache.get_or_fetch(mods, req, req_key, opts)
       end
 
       @doc """

@@ -138,8 +138,7 @@ defmodule Spoxy.Prerender.Server do
     if Map.has_key?(refs_resp, ref) do
       Logger.info("1st sample task: performing cleanup for a terminated task")
 
-      {:noreply, _} =
-        do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
+      {:noreply, _} = do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
     else
       # task didn't finish...
       # we're going to sample it again in `sample_task_interval` ms
@@ -162,8 +161,7 @@ defmodule Spoxy.Prerender.Server do
       if Map.has_key?(refs_resp, ref) do
         Logger.info("2nd sample task: performing cleanup for a terminated task")
 
-        {:noreply, _} =
-          do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
+        {:noreply, _} = do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
       else
         # seems the task is taking too much time...
         # we'll shut it down brutally and reset its state

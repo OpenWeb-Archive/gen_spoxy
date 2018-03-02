@@ -46,7 +46,8 @@ defmodule Spoxy.Cache do
             {:ok, resp}
           end
         else
-          # we have fresh data {:ok, resp}
+          # we have a fresh data in the cache
+          {:ok, resp}
         end
 
       {:miss, _} ->
@@ -74,7 +75,7 @@ defmodule Spoxy.Cache do
         version = UUID.uuid1()
         metadata = %{version: version}
 
-        store_opts = [table_name, req, req_key, resp, metadata, opts]
+        store_opts = [table_name, {req, req_key, resp, metadata}, opts]
         store_req!(store_module, store_opts)
 
         do_janitor_work = Keyword.get(opts, :do_janitor_work, true)
