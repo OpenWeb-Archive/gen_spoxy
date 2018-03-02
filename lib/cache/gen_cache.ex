@@ -8,10 +8,11 @@ defmodule GenSpoxy.Cache do
       require Logger
 
       alias Spoxy.Cache
+      alias GenSpoxy.Stores.Ets
 
       @behaviour Spoxy.Cache.Behaviour
 
-      @store_module Keyword.get(unquote(opts), :store_module, GenSpoxy.Stores.Ets)
+      @store_module Keyword.get(unquote(opts), :store_module, Ets)
       @prerender_module Keyword.get(unquote(opts), :prerender_module)
 
       cache_module = __MODULE__
@@ -62,7 +63,8 @@ defmodule GenSpoxy.Cache do
 
       def refresh_req!(req, opts) do
         req_key = calc_req_key(req)
-        Cache.refresh_req!({@prerender_module, @store_module}, req, req_key, opts)
+        mods = {@prerender_module, @store_module}
+        Cache.refresh_req!(mods, req, req_key, opts)
       end
 
       def await(task) do

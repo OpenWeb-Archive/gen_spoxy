@@ -138,7 +138,7 @@ defmodule Spoxy.Prerender.Server do
     if Map.has_key?(refs_resp, ref) do
       Logger.info("1st sample task: performing cleanup for a terminated task")
 
-      {:noreply, _new_state} =
+      {:noreply, _} =
         do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
     else
       # task didn't finish...
@@ -158,11 +158,11 @@ defmodule Spoxy.Prerender.Server do
         {:sample_task, %{ref: ref} = task, 2 = _iteration},
         %{refs_resp: refs_resp} = state
       ) do
-    {:noreply, _new_state} =
+    {:noreply, _} =
       if Map.has_key?(refs_resp, ref) do
         Logger.info("2nd sample task: performing cleanup for a terminated task")
 
-        {:noreply, _new_state} =
+        {:noreply, _} =
           do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
       else
         # seems the task is taking too much time...
@@ -172,7 +172,7 @@ defmodule Spoxy.Prerender.Server do
 
         Logger.info("2nd sample task: performing full cleanup (#{inspect(opts)})")
 
-        {:noreply, _new_state} = do_cleanup(task, state, opts)
+        {:noreply, _} = do_cleanup(task, state, opts)
       end
   end
 
@@ -189,7 +189,7 @@ defmodule Spoxy.Prerender.Server do
     notify_listeners(listeners, {:error, "error occurred"})
 
     cleanup_opts = [delete_req_state: true, shutdown_task: false]
-    {:noreply, _new_state} = do_cleanup(%{ref: ref, pid: pid}, state, cleanup_opts)
+    {:noreply, _} = do_cleanup(%{ref: ref, pid: pid}, state, cleanup_opts)
   end
 
   def handle_info(_msg, state) do

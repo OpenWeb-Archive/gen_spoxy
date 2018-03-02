@@ -5,7 +5,7 @@ defmodule GenSpoxy.Stores.Ets.Supervisor do
 
   use Supervisor
 
-  alias GenSpoxy.Stores
+  alias GenSpoxy.Stores.Ets
 
   def start_link(opts \\ []) do
     Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
@@ -13,8 +13,8 @@ defmodule GenSpoxy.Stores.Ets.Supervisor do
 
   def init(_opts) do
     children =
-      Enum.map(1..Stores.Ets.total_partitions(), fn partition ->
-        worker(Stores.Ets, [[partition: partition]], id: "ets-store-#{partition}")
+      Enum.map(1..Ets.total_partitions(), fn partition ->
+        worker(Ets, [[partition: partition]], id: "ets-store-#{partition}")
       end)
 
     supervise(children, strategy: :one_for_one)

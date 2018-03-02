@@ -29,7 +29,8 @@ defmodule GenSpoxy.Periodic.TasksExecutor do
       end
 
       def enqueue_task(req_key, task) do
-        GenServer.cast(lookup_req_server(req_key), {:enqueue_task, req_key, task})
+        server = lookup_req_server(req_key)
+        GenServer.cast(server, {:enqueue_task, req_key, task})
       end
 
       # callbacks

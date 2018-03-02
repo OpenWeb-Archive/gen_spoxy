@@ -11,7 +11,7 @@ defmodule GenSpoxy.Prerender do
 
       @behaviour Spoxy.Prerender.Behaviour
 
-      @perform_default_timeout GenSpoxy.Constants.default_prerender_timeout()
+      @default_timeout GenSpoxy.Constants.default_prerender_timeout()
       @total_partitions GenSpoxy.Constants.total_partitions(:gen_prerender)
 
       def start_link(opts) do
@@ -22,7 +22,7 @@ defmodule GenSpoxy.Prerender do
         server = lookup_server_name(req)
         req_key = calc_req_key(req)
 
-        Server.perform(server, __MODULE__, req, req_key, @perform_default_timeout)
+        Server.perform(server, __MODULE__, req, req_key, @default_timeout)
       end
 
       def sample_task_interval do
@@ -43,7 +43,7 @@ defmodule GenSpoxy.Prerender do
       end
 
       @impl true
-      def total_partitions() do
+      def total_partitions do
         @total_partitions
       end
 
@@ -60,16 +60,20 @@ defmodule GenSpoxy.Prerender do
         calc_req_partition(req_key)
       end
 
-      def inspect_all_partitions() do
-        Enum.reduce(1..@total_partitions, %{total_listeners: 0, total_passive: 0}, fn partition,
-                                                                                      acc ->
-          %{total_listeners: partition_total, total_passive: partition_passive} =
-            inspect_partition(partition)
+      def inspect_all_partitions do
+        initial_state = %{total_listeners: 0, total_passive: 0}
 
-          %{total_listeners: total_listeners, total_passive: total_passive} = acc
+        Enum.reduce(1..@total_partitions, initial_state, fn partition, acc ->
+          partition_data = inspect_partition(partition)
 
-          new_total_listeners = total_listeners + partition_total
-          new_total_passive = total_passive + partition_passive
+          {:ok, listeners} = Map.fetch(partition_data, :total_listeners)
+          {:ok, passive} = Map.fetch(partition_data, :total_passive)
+
+          {:ok, total_listeners} = Map.fetch(acc, :total_listeners)
+          {:ok, total_passive} = Map.fetch(acc, :total_passive)
+
+          new_total_listeners = total_listeners + listeners
+          new_total_passive = total_passive + passive
 
           acc
           |> Map.update(:total_listeners, new_total_listeners)

@@ -19,7 +19,7 @@ defmodule GenSpoxy.Prerender.Supervisor do
 
         children =
           Enum.map(1..total_partitions, fn partition ->
-            child_name = apply(@supervised_module, :partition_server, [partition])
+            child_name = calc_child_name(partition)
 
             worker(
               @supervised_module,
@@ -29,6 +29,10 @@ defmodule GenSpoxy.Prerender.Supervisor do
           end)
 
         supervise(children, strategy: :one_for_one)
+      end
+
+      defp calc_child_name(partition) do
+        apply(@supervised_module, :partition_server, [partition])
       end
     end
   end
