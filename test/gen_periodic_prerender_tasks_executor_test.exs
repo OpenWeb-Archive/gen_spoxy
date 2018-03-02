@@ -13,15 +13,15 @@ defmodule GenSpoxy.PeriodicPrerenderTasksExecutor.Tests do
     end
   )
 
-  defmodule Periodic.SamplePrerenderCache do
-    use GenSpoxy.PrerenderCache,
+  defmodule Periodic.SampleCache do
+    use GenSpoxy.Cache,
       store_module: Ets,
       prerender_module: Periodic.SamplePrerender
   end
 
   defmodule SampleCacheTasksExecutor do
     use GenSpoxy.PeriodicPrerenderTasksExecutor,
-      cache_module: Periodic.SamplePrerenderCache,
+      cache_module: Periodic.SampleCache,
       total_partitions: 1,
       sampling_interval: 100
   end

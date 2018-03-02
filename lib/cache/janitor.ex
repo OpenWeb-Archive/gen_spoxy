@@ -1,4 +1,4 @@
-defmodule Spoxy.StoreJanitor do
+defmodule Spoxy.Cache.Janitor do
   def schedule_janitor_work(store_module, table_name, req_key, metadata, janitor_time) do
     entry = {store_module, table_name, req_key, metadata}
     timeout = janitor_time + 5_000

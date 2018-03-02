@@ -1,4 +1,4 @@
-defmodule GenSpoxy.PrerenderCache.StressTests do
+defmodule GenSpoxy.Cache.StressTests do
   use ExUnit.Case
 
   alias GenSpoxy.Stores.Ets
@@ -14,7 +14,7 @@ defmodule GenSpoxy.PrerenderCache.StressTests do
   )
 
   defmodule Stress.SampleCache do
-    use GenSpoxy.PrerenderCache, prerender_module: Stress.SamplePrerender
+    use GenSpoxy.Cache, prerender_module: Stress.SamplePrerender
   end
 
   setup_all do

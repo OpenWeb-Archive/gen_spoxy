@@ -1,4 +1,4 @@
-defmodule GenSpoxy.PrerenderCache.Tests do
+defmodule GenSpoxy.Cache.Tests do
   use ExUnit.Case
 
   alias GenSpoxy.Stores.Ets
@@ -7,8 +7,8 @@ defmodule GenSpoxy.PrerenderCache.Tests do
 
   defprerender(SamplePrerender, do_req: fn req -> {:ok, "response for #{inspect(req)}"} end)
 
-  defmodule SamplePrerenderCache do
-    use GenSpoxy.PrerenderCache, prerender_module: SamplePrerender
+  defmodule SampleCache do
+    use GenSpoxy.Cache, prerender_module: SamplePrerender
   end
 
   setup_all do
@@ -27,11 +27,11 @@ defmodule GenSpoxy.PrerenderCache.Tests do
     req = ["req-cache-test-1", "newest"]
     ttl_ms = 200
 
-    result = SamplePrerenderCache.get(req, table_name: table_name)
+    result = SampleCache.get(req, table_name: table_name)
     assert {:miss, _reason} = result
 
     resp =
-      SamplePrerenderCache.get_or_fetch(
+      SampleCache.get_or_fetch(
         req,
         table_name: table_name,
         do_janitor_work: false,
@@ -41,11 +41,11 @@ defmodule GenSpoxy.PrerenderCache.Tests do
 
     assert {:ok, "response for [\"req-cache-test-1\", \"newest\"]"} = resp
 
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
     assert {:hit, {"response for [\"req-cache-test-1\", \"newest\"]", %{}}} = resp
 
     resp =
-      SamplePrerenderCache.get_or_fetch(
+      SampleCache.get_or_fetch(
         req,
         table_name: table_name,
         do_janitor_work: false,
@@ -58,7 +58,7 @@ defmodule GenSpoxy.PrerenderCache.Tests do
     # invalidate
     req_key = SamplePrerender.calc_req_key(req)
     Ets.invalidate!(table_name, req_key)
-    assert {:miss, _reason} = SamplePrerenderCache.get(req, table_name: table_name)
+    assert {:miss, _reason} = SampleCache.get(req, table_name: table_name)
   end
 
   test "stale data invalidates the request when `blocking=true`" do
@@ -66,10 +66,10 @@ defmodule GenSpoxy.PrerenderCache.Tests do
     req = ["req-cache-test-2", "newest"]
     ttl_ms = 200
 
-    assert {:miss, _reason} = SamplePrerenderCache.get(req, table_name: table_name)
+    assert {:miss, _reason} = SampleCache.get(req, table_name: table_name)
 
     # triggers fetch-and-store
-    SamplePrerenderCache.get_or_fetch(
+    SampleCache.get_or_fetch(
       req,
       table_name: table_name,
       do_janitor_work: false,
@@ -77,30 +77,30 @@ defmodule GenSpoxy.PrerenderCache.Tests do
       ttl_ms: ttl_ms
     )
 
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
 
     assert {:hit,
             {"response for [\"req-cache-test-2\", \"newest\"]", %{version: version} = metadata}} =
              resp
 
     # data is still fresh
-    refute SamplePrerenderCache.should_invalidate?(req, resp, metadata)
+    refute SampleCache.should_invalidate?(req, resp, metadata)
 
     # waiting `ttl_ms * 3` ms so that the data will become stale for sure
     :timer.sleep(ttl_ms * 3)
 
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
 
     assert {:hit,
             {"response for [\"req-cache-test-2\", \"newest\"]", %{version: ^version} = metadata}} =
              resp
 
     # data should have become stale by now
-    assert SamplePrerenderCache.should_invalidate?(req, resp, metadata)
+    assert SampleCache.should_invalidate?(req, resp, metadata)
 
     # this fetch-and-store should trigger a refresh to the stale data
     resp =
-      SamplePrerenderCache.get_or_fetch(
+      SampleCache.get_or_fetch(
         req,
         table_name: table_name,
         do_janitor_work: false,
@@ -111,7 +111,7 @@ defmodule GenSpoxy.PrerenderCache.Tests do
     assert {:ok, "response for [\"req-cache-test-2\", \"newest\"]"} = resp
 
     # asserting the stored metadata has been changed
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
 
     assert {:hit, {"response for [\"req-cache-test-2\", \"newest\"]", %{version: new_version}}} =
              resp
@@ -124,10 +124,10 @@ defmodule GenSpoxy.PrerenderCache.Tests do
     req = ["req-cache-test-3", "newest"]
     ttl_ms = 200
 
-    assert {:miss, _reason} = SamplePrerenderCache.get(req, table_name: table_name)
+    assert {:miss, _reason} = SampleCache.get(req, table_name: table_name)
 
     # triggers fetch-and-store
-    SamplePrerenderCache.get_or_fetch(
+    SampleCache.get_or_fetch(
       req,
       table_name: table_name,
       do_janitor_work: false,
@@ -135,30 +135,30 @@ defmodule GenSpoxy.PrerenderCache.Tests do
       ttl_ms: ttl_ms
     )
 
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
 
     assert {:hit,
             {"response for [\"req-cache-test-3\", \"newest\"]", %{version: version} = metadata}} =
              resp
 
     # data is still fresh
-    refute SamplePrerenderCache.should_invalidate?(req, resp, metadata)
+    refute SampleCache.should_invalidate?(req, resp, metadata)
 
     # waiting `ttl_ms * 3` ms so that the data will become stale for sure
     :timer.sleep(ttl_ms * 3)
 
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
 
     assert {:hit,
             {"response for [\"req-cache-test-3\", \"newest\"]", %{version: ^version} = metadata}} =
              resp
 
     # data should have become stale by now
-    assert SamplePrerenderCache.should_invalidate?(req, resp, metadata)
+    assert SampleCache.should_invalidate?(req, resp, metadata)
 
     # this fetch-and-store should trigger a refresh in the background
     resp =
-      SamplePrerenderCache.get_or_fetch(
+      SampleCache.get_or_fetch(
         req,
         table_name: table_name,
         do_janitor_work: false,
@@ -169,7 +169,7 @@ defmodule GenSpoxy.PrerenderCache.Tests do
     assert {:ok, "response for [\"req-cache-test-3\", \"newest\"]"} = resp
 
     # asserting the stored metadata has been changed
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
 
     assert {:hit, {"response for [\"req-cache-test-3\", \"newest\"]", %{version: new_version}}} =
              resp
@@ -182,10 +182,10 @@ defmodule GenSpoxy.PrerenderCache.Tests do
     req = ["req-cache-test-4", "newest"]
     ttl_ms = 200
 
-    assert {:miss, _reason} = SamplePrerenderCache.get(req, table_name: table_name)
+    assert {:miss, _reason} = SampleCache.get(req, table_name: table_name)
 
     # triggers fetch-and-store
-    SamplePrerenderCache.get_or_fetch(
+    SampleCache.get_or_fetch(
       req,
       table_name: table_name,
       do_janitor_work: true,
@@ -193,18 +193,18 @@ defmodule GenSpoxy.PrerenderCache.Tests do
       ttl_ms: ttl_ms
     )
 
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
 
     assert {:hit,
             {"response for [\"req-cache-test-4\", \"newest\"]", %{version: _version} = metadata}} =
              resp
 
     # data is still fresh
-    refute SamplePrerenderCache.should_invalidate?(req, resp, metadata)
+    refute SampleCache.should_invalidate?(req, resp, metadata)
 
     :timer.sleep(ttl_ms * 3)
 
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
     assert {:miss, _reason} = resp
   end
 
@@ -213,10 +213,10 @@ defmodule GenSpoxy.PrerenderCache.Tests do
     req = ["req-cache-test-5", "newest"]
     ttl_ms = 200
 
-    assert {:miss, _reason} = SamplePrerenderCache.get(req, table_name: table_name)
+    assert {:miss, _reason} = SampleCache.get(req, table_name: table_name)
 
     # triggers fetch-and-store
-    SamplePrerenderCache.get_or_fetch(
+    SampleCache.get_or_fetch(
       req,
       table_name: table_name,
       do_janitor_work: false,
@@ -224,25 +224,25 @@ defmodule GenSpoxy.PrerenderCache.Tests do
       ttl_ms: ttl_ms
     )
 
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
 
     assert {:hit,
             {"response for [\"req-cache-test-5\", \"newest\"]", %{version: _version} = metadata}} =
              resp
 
     # data is still fresh
-    refute SamplePrerenderCache.should_invalidate?(req, resp, metadata)
+    refute SampleCache.should_invalidate?(req, resp, metadata)
 
     # waiting `ttl_ms * 3` ms so that the data will become stale for sure
     :timer.sleep(ttl_ms * 3)
 
-    resp = SamplePrerenderCache.get(req, table_name: table_name)
+    resp = SampleCache.get(req, table_name: table_name)
 
     assert {:hit,
             {"response for [\"req-cache-test-5\", \"newest\"]", %{version: _version} = metadata}} =
              resp
 
     # data is stale
-    assert SamplePrerenderCache.should_invalidate?(req, resp, metadata)
+    assert SampleCache.should_invalidate?(req, resp, metadata)
   end
 end
