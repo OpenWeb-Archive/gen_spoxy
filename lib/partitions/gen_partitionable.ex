@@ -15,7 +15,7 @@ defmodule GenSpoxy.Partitionable do
         {:global, "#{__MODULE__}-#{partition}"}
       end
 
-      defoverridable [partition_server: 1]
+      defoverridable partition_server: 1
     end
   end
 end

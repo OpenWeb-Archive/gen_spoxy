@@ -7,24 +7,26 @@ defmodule GenSpoxy.Prerender do
     quote do
       use GenSpoxy.Partitionable
 
+      alias Spoxy.Prerender.Server
+
       @behaviour Spoxy.Prerender.Behaviour
 
       @perform_default_timeout GenSpoxy.Constants.default_prerender_timeout()
       @total_partitions GenSpoxy.Constants.total_partitions(:gen_prerender)
 
       def start_link(opts) do
-        Spoxy.Prerender.Server.start_link(opts)
+        Server.start_link(opts)
       end
 
       def perform(req, opts \\ []) do
         server = lookup_server_name(req)
         req_key = calc_req_key(req)
 
-        Spoxy.Prerender.Server.perform(server, __MODULE__, req, req_key, @perform_default_timeout)
+        Server.perform(server, __MODULE__, req, req_key, @perform_default_timeout)
       end
 
       def sample_task_interval do
-        Spoxy.Prerender.Server.sample_task_interval()
+        Server.sample_task_interval()
       end
 
       @impl true
@@ -50,7 +52,7 @@ defmodule GenSpoxy.Prerender do
       """
       def get_partition_state(partition) do
         server = partition_server(partition)
-        Spoxy.Prerender.Server.get_partition_state(server)
+        Server.get_partition_state(server)
       end
 
       def req_partition(req) do
@@ -69,7 +71,9 @@ defmodule GenSpoxy.Prerender do
           new_total_listeners = total_listeners + partition_total
           new_total_passive = total_passive + partition_passive
 
-          %{acc | total_listeners: new_total_listeners, total_passive: new_total_passive}
+          acc
+          |> Map.update(:total_listeners, new_total_listeners)
+          |> Map.update(:total_passive, new_total_passive)
         end)
       end
 
@@ -80,9 +84,12 @@ defmodule GenSpoxy.Prerender do
       def inspect_partition(partition) do
         %{reqs_state: reqs_state} = get_partition_state(partition)
 
-        Enum.reduce(reqs_state, %{total_listeners: 0, total_passive: 0}, fn {_req_key, req_state},
-                                                                            acc ->
-          %{total_listeners: total_listeners, total_passive: total_passive} = acc
+        initial_state = %{total_listeners: 0, total_passive: 0}
+
+        Enum.reduce(reqs_state, initial_state, fn {_req_key, req_state}, acc ->
+          {:ok, total_listeners} = Map.fetch(acc, :total_listeners)
+          {:ok, total_passive} = Map.fetch(acc, :total_passive)
+
           %{listeners: listeners} = req_state
 
           passive = for {:passive, listener} <- listeners, do: listener
@@ -90,7 +97,9 @@ defmodule GenSpoxy.Prerender do
           new_total_listeners = total_listeners + Enum.count(listeners)
           new_total_passive = total_passive + Enum.count(passive)
 
-          %{acc | total_listeners: new_total_listeners, total_passive: new_total_passive}
+          acc
+          |> Map.update(:total_listeners, new_total_listeners)
+          |> Map.update(:total_passive, new_total_passive)
         end)
       end
 

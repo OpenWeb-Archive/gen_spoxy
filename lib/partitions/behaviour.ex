@@ -11,6 +11,5 @@ defmodule Spoxy.Partitionable.Behaviour do
 
   @callback calc_req_partition(key :: String.t()) :: term
 
-  @callback partition_server(key :: term) :: any
+  @callback partition_server(key :: term) :: term
 end
-

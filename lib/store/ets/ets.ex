@@ -7,7 +7,7 @@ defmodule GenSpoxy.Stores.Ets do
   @total_partitions GenSpoxy.Constants.total_partitions(:ets)
 
   @moduledoc """
-  `EtsCacheStore' implements the `GenSpoxy.PrerenderStore` behaviour.
+  `EtsCacheStore' implements the `GenSpoxy.Store` behaviour.
   It stores its data under `ets` and it manages it in using sharded `GenServer`.
   """
 
@@ -43,8 +43,9 @@ defmodule GenSpoxy.Stores.Ets do
   @impl true
   def invalidate!(table_name, req_key) do
     partition = calc_req_partition(table_name)
+    server = partition_server(partition)
 
-    GenServer.call(partition_server(partition), {:invalidate!, partition, req_key})
+    GenServer.call(server, {:invalidate!, partition, req_key})
   end
 
   @doc """

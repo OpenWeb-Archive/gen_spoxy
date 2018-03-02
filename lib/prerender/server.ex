@@ -33,22 +33,28 @@ defmodule Spoxy.Prerender.Server do
   # callbacks
   @impl true
   def handle_call({:perform, prerender_module, req, req_key}, from, state) do
-    %{pid_ref: pid_ref, refs_resp: refs_resp, refs_req: refs_req, reqs_state: reqs_state} = state
+    {:ok, pid_ref} = Map.fetch(state, :pid_ref)
+    {:ok, refs_resp} = Map.fetch(state, :refs_resp)
+    {:ok, refs_req} = Map.fetch(state, :refs_req)
+    {:ok, reqs_state} = Map.fetch(state, :reqs_state)
 
-    req_state = Map.get(reqs_state, req_key, %{listeners: [], status: :not_started})
+    not_started_state = %{listeners: [], status: :not_started}
+    req_state = Map.get(reqs_state, req_key, not_started_state)
 
     %{listeners: listeners, status: status} = req_state
 
     {new_req_state, new_pid_ref, new_refs_req} =
       case status do
         :not_started ->
-          %Task{ref: ref, pid: pid} = Task.async(prerender_module, :do_req, [req])
+          task = Task.async(prerender_module, :do_req, [req])
+          %Task{ref: ref, pid: pid} = task
 
-          # we first assert that `ref` and `pid` aren't in use (handling theoretical `pid`/`ref` collisions due to erlang VM reuse)
+          # we first assert that `ref` and `pid` aren't in use.
+          # *we handling theoretical `pid`/`ref` collisions)
+          # if such case happens it'll probably implies a bug
           if Map.has_key?(pid_ref, pid) || Map.has_key?(refs_resp, ref) ||
                Map.has_key?(refs_req, ref) do
             # this should never really happen
-            # see: https://stackoverflow.com/questions/46138098/can-erlang-reuse-process-ids-if-so-how-to-be-sure-of-correctness
             Logger.error("resources (pid/ref) collisions")
 
             Process.exit(pid, :kill)
@@ -58,7 +64,8 @@ defmodule Spoxy.Prerender.Server do
 
           task = %{pid: pid, ref: ref}
 
-          # we'll sample the task completion status in `sample_task_interval` ms from now
+          # we'll sample the task completion status
+          # in `sample_task_interval` ms from now
           schedule_sample_task(task, 1, @sample_task_interval)
 
           new_running_req_state = %{
@@ -71,7 +78,8 @@ defmodule Spoxy.Prerender.Server do
            Map.put_new(refs_req, ref, req_key)}
 
         :running ->
-          {%{req_state | listeners: [{:passive, from} | listeners]}, pid_ref, refs_req}
+          new_listeners = [{:passive, from} | listeners]
+          {%{req_state | listeners: new_listeners}, pid_ref, refs_req}
 
         _ ->
           raise "unknown req status: '#{status}'"
@@ -86,8 +94,8 @@ defmodule Spoxy.Prerender.Server do
         reqs_state: new_reqs_state
     }
 
-    # the `handle_info` method will reply to `from` in the future (see: `handle_info({ref, resp}, state)`)
-    # so we return `:noreply` for now
+    # the `handle_info` method will reply to `from` in the future.
+    # so we return `:noreply` for now. (see: `handle_info({ref, resp}, state)`)
     {:noreply, new_state}
   end
 
@@ -133,7 +141,8 @@ defmodule Spoxy.Prerender.Server do
       {:noreply, _new_state} =
         do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
     else
-      # task didn't finish... so we're going to sample it again in `sample_task_interval` ms
+      # task didn't finish...
+      # we're going to sample it again in `sample_task_interval` ms
       schedule_sample_task(task, 2, @sample_task_interval)
       {:noreply, state}
     end
@@ -141,8 +150,8 @@ defmodule Spoxy.Prerender.Server do
 
   # Here we perform the 2nd and final sample for a prerender task.
   # If the task has been completed we are left with cleaning up its resources,
-  # else, if task is still on-going (should be a very rare case), we brutally kill it
-  # and then cleanup the associated resources.
+  # else, if task is still on-going (should be a very rare case),
+  # we'll brutally kill it and then cleanup the associated resources.
 
   @impl true
   def handle_info(
@@ -156,7 +165,8 @@ defmodule Spoxy.Prerender.Server do
         {:noreply, _new_state} =
           do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
       else
-        # seems the task is taking too much time, so we'll shut it down brutally and reset its state
+        # seems the task is taking too much time...
+        # we'll shut it down brutally and reset its state
 
         opts = [delete_req_state: true, shutdown_task: true]
 
@@ -178,8 +188,8 @@ defmodule Spoxy.Prerender.Server do
 
     notify_listeners(listeners, {:error, "error occurred"})
 
-    {:noreply, _new_state} =
-      do_cleanup(%{ref: ref, pid: pid}, state, delete_req_state: true, shutdown_task: false)
+    cleanup_opts = [delete_req_state: true, shutdown_task: false]
+    {:noreply, _new_state} = do_cleanup(%{ref: ref, pid: pid}, state, cleanup_opts)
   end
 
   def handle_info(_msg, state) do
@@ -192,7 +202,10 @@ defmodule Spoxy.Prerender.Server do
 
   ## private
   defp do_cleanup(%{ref: ref, pid: pid}, state, opts) do
-    %{pid_ref: pid_ref, refs_resp: refs_resp, refs_req: refs_req, reqs_state: reqs_state} = state
+    {:ok, pid_ref} = Map.fetch(state, :pid_ref)
+    {:ok, refs_resp} = Map.fetch(state, :refs_resp)
+    {:ok, refs_req} = Map.fetch(state, :refs_req)
+    {:ok, reqs_state} = Map.fetch(state, :reqs_state)
 
     req_key = Map.get(refs_req, ref)
 

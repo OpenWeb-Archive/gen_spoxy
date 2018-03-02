@@ -5,6 +5,7 @@ defmodule GenSpoxy.Periodic.TasksExecutor do
   when we execute a `spoxy` reqeust and have a cache miss returning a stale date,
   we may choose to return the stale data and queue a background task.
   """
+
   @callback execute_tasks!(req_key :: String.t(), req_tasks :: Array) :: :ok
 
   defmacro __using__(opts) do

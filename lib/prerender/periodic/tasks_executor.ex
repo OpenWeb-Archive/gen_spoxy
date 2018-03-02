@@ -1,4 +1,8 @@
 defmodule GenSpoxy.Prerender.PeriodicTasksExecutor do
+  @moduledoc """
+  responsible on periodically executing prerender tasks.
+  """
+
   defmacro __using__(opts) do
     quote do
       use GenSpoxy.Periodic.TasksExecutor, unquote(opts)

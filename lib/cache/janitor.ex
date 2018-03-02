@@ -1,4 +1,8 @@
 defmodule Spoxy.Cache.Janitor do
+  @moduledoc """
+  responsible on garbage collecting stale data out of the cache store (for example: `ets`)
+  """
+
   def schedule_janitor_work(store_module, table_name, req_key, metadata, janitor_time) do
     entry = {store_module, table_name, req_key, metadata}
     timeout = janitor_time + 5_000

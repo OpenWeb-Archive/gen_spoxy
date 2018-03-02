@@ -2,17 +2,13 @@ defmodule Spoxy.Cache do
   @moduledoc """
   """
 
-  def async_get_or_fetch(
-        {prerender_module, store_module, tasks_executor_mod},
-        req,
-        req_key,
-        opts \\ []
-      ) do
+  alias Spoxy.Cache.Janitor
+
+  def async_get_or_fetch(mods, req, req_key, opts \\ []) do
     Task.async(fn ->
       started = System.system_time(:milliseconds)
 
-      {:ok, resp} =
-        get_or_fetch({prerender_module, store_module, tasks_executor_mod}, req, req_key, opts)
+      {:ok, resp} = get_or_fetch(mods, req, req_key, opts)
 
       ended = System.system_time(:milliseconds)
 
@@ -20,7 +16,9 @@ defmodule Spoxy.Cache do
     end)
   end
 
-  def get_or_fetch({prerender_module, store_module, tasks_executor_mod}, req, req_key, opts \\ []) do
+  def get_or_fetch(mods, req, req_key, opts \\ []) do
+    {prerender_module, store_module, tasks_executor_mod} = mods
+
     hit_or_miss = get(store_module, req_key, opts)
 
     case hit_or_miss do
@@ -28,8 +26,9 @@ defmodule Spoxy.Cache do
         if should_invalidate?(req, resp, metadata) do
           # the cache holds stale data,
           # now we need to decide if we will force refreshing the cache
-          # before returning a response (a _blocking_ call) or if whether we'll return
-          # a stale reponse and enqueue a background task that will refresh the cache
+          # before returning a response (a _blocking_ call)
+          # or whether we'll return a stale reponse and enqueue
+          # a background task that will refresh the cache
           blocking = Keyword.get(opts, :blocking, false)
 
           if blocking do
@@ -37,8 +36,8 @@ defmodule Spoxy.Cache do
             refresh_req!({prerender_module, store_module}, req, req_key, opts)
           else
             # we'll spawn a background task in a fire-and-forget manner
-            # that will make sure the stale data is refreshed so that future requests
-            # will benefit from a fresh data
+            # that will make sure the stale data is refreshed
+            # so that future requests, will benefit from a fresh data
             Task.start(fn ->
               enqueue_req(tasks_executor_mod, req_key, req, opts)
             end)
@@ -47,8 +46,7 @@ defmodule Spoxy.Cache do
             {:ok, resp}
           end
         else
-          # we have fresh data
-          {:ok, resp}
+          # we have fresh data {:ok, resp}
         end
 
       {:miss, _} ->
@@ -63,7 +61,7 @@ defmodule Spoxy.Cache do
 
     case lookup do
       nil -> {:miss, "couldn't locate in cache"}
-      _   -> {:hit, lookup}
+      _ -> {:hit, lookup}
     end
   end
 
@@ -76,12 +74,13 @@ defmodule Spoxy.Cache do
         version = UUID.uuid1()
         metadata = %{version: version}
 
-        store_req!(store_module, [table_name, req, req_key, resp, metadata, opts])
+        store_opts = [table_name, req, req_key, resp, metadata, opts]
+        store_req!(store_module, store_opts)
 
         do_janitor_work = Keyword.get(opts, :do_janitor_work, true)
 
         if do_janitor_work do
-          Spoxy.Cache.Janitor.schedule_janitor_work(
+          Janitor.schedule_janitor_work(
             store_module,
             table_name,
             req_key,

@@ -7,6 +7,8 @@ defmodule GenSpoxy.Cache do
     quote do
       require Logger
 
+      alias Spoxy.Cache
+
       @behaviour Spoxy.Cache.Behaviour
 
       @store_module Keyword.get(unquote(opts), :store_module, GenSpoxy.Stores.Ets)
@@ -21,6 +23,7 @@ defmodule GenSpoxy.Cache do
       end
 
       tasks_executor_sup_mod = String.to_atom("#{tasks_executor_mod}.Supervisor")
+
       defmodule tasks_executor_sup_mod do
         use GenSpoxy.Prerender.Supervisor, supervised_module: tasks_executor_mod
       end
@@ -28,7 +31,7 @@ defmodule GenSpoxy.Cache do
       def async_get_or_fetch(req, opts \\ []) do
         req_key = calc_req_key(req)
 
-        Spoxy.Cache.async_get_or_fetch(
+        Cache.async_get_or_fetch(
           {@prerender_module, @store_module, @tasks_executor_mod},
           req,
           req_key,
@@ -39,7 +42,7 @@ defmodule GenSpoxy.Cache do
       def get_or_fetch(req, opts \\ []) do
         req_key = calc_req_key(req)
 
-        Spoxy.Cache.get_or_fetch(
+        Cache.get_or_fetch(
           {@prerender_module, @store_module, @tasks_executor_mod},
           req,
           req_key,
@@ -54,12 +57,12 @@ defmodule GenSpoxy.Cache do
       """
       def get(req, opts \\ []) do
         req_key = calc_req_key(req)
-        Spoxy.Cache.get(@store_module, req_key, opts)
+        Cache.get(@store_module, req_key, opts)
       end
 
       def refresh_req!(req, opts) do
         req_key = calc_req_key(req)
-        Spoxy.Cache.refresh_req!({@prerender_module, @store_module}, req, req_key, opts)
+        Cache.refresh_req!({@prerender_module, @store_module}, req, req_key, opts)
       end
 
       def await(task) do
@@ -67,20 +70,20 @@ defmodule GenSpoxy.Cache do
       end
 
       def do_req(req) do
-        Spoxy.Cache.do_req(@prerender_module, req)
+        Cache.do_req(@prerender_module, req)
       end
 
       def store_req!(opts) do
-        Spoxy.Cache.store_req!(@store_module, opts)
+        Cache.store_req!(@store_module, opts)
       end
 
       def lookup_req(table_name, req_key) do
-        Spoxy.Cache.lookup_req(@store_module, table_name, req_key)
+        Cache.lookup_req(@store_module, table_name, req_key)
       end
 
       @impl true
       def should_invalidate?(req, resp, metadata) do
-        Spoxy.Cache.should_invalidate?(req, resp, metadata)
+        Cache.should_invalidate?(req, resp, metadata)
       end
 
       # defoverridable [should_invalidate?: 3]
