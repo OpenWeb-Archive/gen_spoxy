@@ -1,4 +1,8 @@
 defmodule GenSpoxy.Stores.Ets.Supervisor do
+  @moduledoc """
+  supervising the `ets` tables used as a cache store
+  """
+
   use Supervisor
 
   def start_link(opts \\ []) do

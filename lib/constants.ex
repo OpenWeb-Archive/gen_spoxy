@@ -1,4 +1,8 @@
 defmodule GenSpoxy.Constants do
+  @moduledoc """
+  gathers all the default settings
+  """
+
   require Logger
 
   def total_partitions(_ctx) do

@@ -6,7 +6,7 @@ defmodule GenSpoxy.PrerenderCache do
   @doc """
   decides if the stored data should be invalidated (for example stale data)
   """
-  @callback should_invalidate?(req :: any, resp :: any, metadata :: any) :: any
+  @callback should_invalidate?(req :: any, resp :: any, metadata :: any) :: boolean()
 
   defmacro __using__(opts) do
     quote do
@@ -54,26 +54,42 @@ defmodule GenSpoxy.PrerenderCache do
         case hit_or_miss do
           {:hit, {resp, metadata}} ->
             if should_invalidate?(req, resp, metadata) do
+              # the cache holds stale data,
+              # now we need to decide if we will force refreshing the cache
+              # before returning a response (a _blocking_ call) or if whether we'll return
+              # a stale reponse and enqueue a background task that will refresh the cache
               blocking = Keyword.get(opts, :blocking, false)
 
               if blocking do
+                # we don't want the stale data, so force recalculation
                 refresh_req!(req, opts)
               else
+                # we'll spawn a background task in a fire-and-forget manner
+                # that will make sure the stale data is refreshed so that future requests
+                # will benefit from a fresh data
                 Task.start(fn ->
                   enqueue_req(req_key, req, opts)
                 end)
 
+                # returning the stale data
                 {:ok, resp}
               end
             else
+              # we have fresh data
               {:ok, resp}
             end
 
           {:miss, _} ->
+            # we have nothing in the cache, we need to calculate the request's value
             refresh_req!(req, opts)
         end
       end
 
+      @doc """
+      receives a request `req`, determines it's signature (a.k.a `req_key`),
+      then it fetches the local cache. it returns `nil` in case there is nothing in cache,
+      else returns the cached entry
+      """
       def get(req, opts \\ []) do
         req_key = calc_req_key(req)
 
@@ -102,7 +118,7 @@ defmodule GenSpoxy.PrerenderCache do
             do_janitor_work = Keyword.get(opts, :do_janitor_work, true)
 
             if do_janitor_work do
-              schedule_janitor_work(table_name, req_key, version, ttl_ms * 2)
+              Spoxy.StoreJanitor.schedule_janitor_work(@store_module, table_name, req_key, version, ttl_ms * 2)
             end
 
             {:ok, resp}
@@ -133,10 +149,6 @@ defmodule GenSpoxy.PrerenderCache do
         apply(@store_module, :lookup_req, [table_name, req_key])
       end
 
-      def invalidate!(table_name, req_key) do
-        apply(@store_module, :invalidate!, [table_name, req_key])
-      end
-
       @impl true
       def should_invalidate?(req, resp, metadata) do
         %{expires_at: expires_at} = metadata
@@ -148,33 +160,6 @@ defmodule GenSpoxy.PrerenderCache do
 
       defp calc_req_key(req) do
         apply(@prerender_module, :calc_req_key, [req])
-      end
-
-      defp schedule_janitor_work(table_name, req_key, metadata, janitor_time) do
-        entry = {table_name, req_key, metadata}
-        timeout = janitor_time + 5_000
-        pid = spawn(__MODULE__, :do_janitor_work, [timeout])
-        Process.send_after(pid, {:invalidate_if_stale!, entry}, janitor_time)
-      end
-
-      def do_janitor_work(timeout \\ 30_000) do
-        timeout = if timeout <= 0, do: 30_000, else: timeout
-
-        receive do
-          {:invalidate_if_stale!, {table_name, req_key, version}} ->
-            case lookup_req(table_name, req_key) do
-              {_resp, %{version: ^version}} ->
-                invalidate!(table_name, req_key)
-
-              _ ->
-                :ignore
-            end
-
-          _ ->
-            Process.exit(self(), :error)
-        after
-          timeout -> Process.exit(self(), :timeout)
-        end
       end
     end
   end

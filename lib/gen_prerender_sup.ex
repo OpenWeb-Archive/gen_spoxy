@@ -1,4 +1,9 @@
 defmodule GenSpoxy.Prerender.Supervisor do
+  @moduledoc """
+  a prerender dedicated supervisor.
+  the prerender supervised module is assumed to implement the `GenSpoxy.Partitionable` behaviour
+  """
+
   defmacro __using__(opts) do
     quote do
       use Supervisor

@@ -19,7 +19,8 @@ defmodule GenPrerender.MixProject do
 
   defp deps do
     [
-       {:uuid, "~> 1.1"}
+      {:uuid, "~> 1.1"},
+      {:credo, "~> 0.3", only: [:dev, :test]}
     ]
   end
 end
