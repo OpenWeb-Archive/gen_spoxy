@@ -191,7 +191,7 @@ defmodule Spoxy.Prerender.Server do
   end
 
   ## private
-  defp do_cleanup(%{ref: ref, pid: pid} = task, state, opts \\ []) do
+  defp do_cleanup(%{ref: ref, pid: pid}, state, opts) do
     %{pid_ref: pid_ref, refs_resp: refs_resp, refs_req: refs_req, reqs_state: reqs_state} = state
 
     req_key = Map.get(refs_req, ref)
@@ -211,8 +211,6 @@ defmodule Spoxy.Prerender.Server do
       end
 
     if shutdown_task do
-      %{pid: pid} = task
-
       Process.exit(pid, :kill)
     end
 

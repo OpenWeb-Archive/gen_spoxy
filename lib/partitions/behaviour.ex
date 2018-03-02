@@ -1,4 +1,4 @@
-defmodule GenSpoxy.Partitionable do
+defmodule Spoxy.Partitionable.Behaviour do
   @moduledoc """
   since `GenServer` based module, process its own mailbox messages in serial manner,
   it's subject to have a long queuing time in case the queue becomes big.
@@ -7,15 +7,10 @@ defmodule GenSpoxy.Partitionable do
   it will be implemented by modules that require and suit a paritioning logic
   """
 
-  defmacro __using__(_opts) do
-    quote do
-      @behaviour Spoxy.Partitionable.Behaviour
+  @callback total_partitions() :: Integer
 
-      def partition_server(partition) do
-        {:global, "#{__MODULE__}-#{partition}"}
-      end
+  @callback calc_req_partition(key :: String.t()) :: term
 
-      defoverridable [partition_server: 1]
-    end
-  end
+  @callback partition_server(key :: term) :: any
 end
+

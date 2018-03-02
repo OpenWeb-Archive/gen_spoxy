@@ -20,7 +20,8 @@ defmodule GenSpoxy.Cache do
         use GenSpoxy.Prerender.PeriodicTasksExecutor, cache_module: cache_module
       end
 
-      defmodule String.to_atom("#{tasks_executor_mod}.Supervisor") do
+      tasks_executor_sup_mod = String.to_atom("#{tasks_executor_mod}.Supervisor")
+      defmodule tasks_executor_sup_mod do
         use GenSpoxy.Prerender.Supervisor, supervised_module: tasks_executor_mod
       end
 
@@ -82,7 +83,7 @@ defmodule GenSpoxy.Cache do
         Spoxy.Cache.should_invalidate?(req, resp, metadata)
       end
 
-      defoverridable should_invalidate?: 3
+      # defoverridable [should_invalidate?: 3]
 
       defp calc_req_key(req) do
         apply(@prerender_module, :calc_req_key, [req])
