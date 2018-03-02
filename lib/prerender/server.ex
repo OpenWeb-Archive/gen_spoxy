@@ -137,7 +137,7 @@ defmodule Spoxy.Prerender.Server do
       ) do
     {:noreply, _} =
       if Map.has_key?(refs_resp, ref) do
-        Logger.info("1st sample task: performing cleanup for a terminated task")
+        Logger.debug("1st sample task: performing cleanup for a terminated task")
 
         cleanup_opts = [delete_req_state: false, shutdown_task: false]
         do_cleanup(task, state, cleanup_opts)
@@ -161,7 +161,7 @@ defmodule Spoxy.Prerender.Server do
       ) do
     {:noreply, _} =
       if Map.has_key?(refs_resp, ref) do
-        Logger.info("2nd sample task: performing cleanup for a terminated task")
+        Logger.debug("2nd sample task: performing cleanup for a terminated task")
 
         do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
       else
@@ -170,7 +170,7 @@ defmodule Spoxy.Prerender.Server do
 
         opts = [delete_req_state: true, shutdown_task: true]
 
-        Logger.info("2nd sample task: performing full cleanup (#{inspect(opts)})")
+        Logger.debug("2nd sample task: performing full cleanup (#{inspect(opts)})")
 
         do_cleanup(task, state, opts)
       end

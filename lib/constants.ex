@@ -3,8 +3,6 @@ defmodule GenSpoxy.Constants do
   gathers all the default settings
   """
 
-  require Logger
-
   def total_partitions(_ctx) do
     System.schedulers_online() * 3
   end

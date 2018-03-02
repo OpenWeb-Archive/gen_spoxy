@@ -5,8 +5,6 @@ defmodule GenSpoxy.Cache do
 
   defmacro __using__(opts) do
     quote do
-      require Logger
-
       alias Spoxy.Cache
       alias GenSpoxy.Stores.Ets
 

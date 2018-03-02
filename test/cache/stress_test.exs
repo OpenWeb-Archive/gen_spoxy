@@ -28,7 +28,6 @@ defmodule GenSpoxy.Cache.StressTests do
     :ok
   end
 
-  @tag :skip
   test "multiple concurrent clients calling the same request" do
     n = 1000
 
