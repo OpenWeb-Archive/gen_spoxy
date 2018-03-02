@@ -20,6 +20,8 @@ erl_crash.dump
 *.ez
 
 # Ignore package tarball (built via "mix hex.build").
-gen_prerender-*.tar
+gen_spoxy-*.tar
+
+*.swp
 
 .DS_Store
