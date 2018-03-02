@@ -13,15 +13,18 @@ defmodule GenSpoxy.Periodic.TasksExecutor do
       use GenServer
       use GenSpoxy.Partitionable
 
+      alias GenSpoxy.Constants
+
       @total_partitions Keyword.get(
                           unquote(opts),
                           :total_partitions,
-                          GenSpoxy.Constants.total_partitions(:tasks_executor) * 10
+                          Constants.total_partitions(:tasks_executor) * 10
                         )
+
       @sampling_interval Keyword.get(
                            unquote(opts),
                            :sampling_interval,
-                           GenSpoxy.Constants.default_periodic_tasks_executor_sampling_interval()
+                           Constants.periodic_tasks_executor_sampling_interval()
                          )
 
       def start_link(opts) do

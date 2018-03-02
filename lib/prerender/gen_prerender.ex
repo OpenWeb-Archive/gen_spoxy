@@ -11,7 +11,7 @@ defmodule GenSpoxy.Prerender do
 
       @behaviour Spoxy.Prerender.Behaviour
 
-      @default_timeout GenSpoxy.Constants.default_prerender_timeout()
+      @default_timeout GenSpoxy.Constants.prerender_timeout()
       @total_partitions GenSpoxy.Constants.total_partitions(:gen_prerender)
 
       def start_link(opts) do

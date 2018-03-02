@@ -7,7 +7,7 @@ defmodule Spoxy.Prerender.Server do
 
   require Logger
 
-  @sample_task_interval GenSpoxy.Constants.default_prerender_sampling_interval()
+  @sample_task_interval GenSpoxy.Constants.prerender_sampling_interval()
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, :ok, opts)
@@ -135,16 +135,18 @@ defmodule Spoxy.Prerender.Server do
         {:sample_task, %{ref: ref} = task, 1 = _iteration},
         %{refs_resp: refs_resp} = state
       ) do
-    if Map.has_key?(refs_resp, ref) do
-      Logger.info("1st sample task: performing cleanup for a terminated task")
+    {:noreply, _} =
+      if Map.has_key?(refs_resp, ref) do
+        Logger.info("1st sample task: performing cleanup for a terminated task")
 
-      {:noreply, _} = do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
-    else
-      # task didn't finish...
-      # we're going to sample it again in `sample_task_interval` ms
-      schedule_sample_task(task, 2, @sample_task_interval)
-      {:noreply, state}
-    end
+        cleanup_opts = [delete_req_state: false, shutdown_task: false]
+        do_cleanup(task, state, cleanup_opts)
+      else
+        # task didn't finish...
+        # we're going to sample it again in `sample_task_interval` ms
+        schedule_sample_task(task, 2, @sample_task_interval)
+        {:noreply, state}
+      end
   end
 
   # Here we perform the 2nd and final sample for a prerender task.
@@ -161,7 +163,7 @@ defmodule Spoxy.Prerender.Server do
       if Map.has_key?(refs_resp, ref) do
         Logger.info("2nd sample task: performing cleanup for a terminated task")
 
-        {:noreply, _} = do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
+        do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
       else
         # seems the task is taking too much time...
         # we'll shut it down brutally and reset its state
@@ -170,7 +172,7 @@ defmodule Spoxy.Prerender.Server do
 
         Logger.info("2nd sample task: performing full cleanup (#{inspect(opts)})")
 
-        {:noreply, _} = do_cleanup(task, state, opts)
+        do_cleanup(task, state, opts)
       end
   end
 
