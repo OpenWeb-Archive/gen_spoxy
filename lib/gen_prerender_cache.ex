@@ -118,7 +118,13 @@ defmodule GenSpoxy.PrerenderCache do
             do_janitor_work = Keyword.get(opts, :do_janitor_work, true)
 
             if do_janitor_work do
-              Spoxy.StoreJanitor.schedule_janitor_work(@store_module, table_name, req_key, version, ttl_ms * 2)
+              Spoxy.StoreJanitor.schedule_janitor_work(
+                @store_module,
+                table_name,
+                req_key,
+                version,
+                ttl_ms * 2
+              )
             end
 
             {:ok, resp}
