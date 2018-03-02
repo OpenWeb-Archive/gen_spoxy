@@ -1,5 +1,5 @@
 defmodule GenSpoxy.Prerender.Tests do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   import ExUnit.CaptureLog
   import Macros.Tests

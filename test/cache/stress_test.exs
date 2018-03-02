@@ -1,5 +1,5 @@
 defmodule GenSpoxy.Cache.StressTests do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   alias GenSpoxy.Stores.Ets
 
@@ -25,6 +25,7 @@ defmodule GenSpoxy.Cache.StressTests do
 
   setup do
     Ets.reset_all!()
+    Ets.Supervisor.start_link()
     :ok
   end
 

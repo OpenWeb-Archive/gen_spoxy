@@ -1,5 +1,5 @@
 defmodule GenSpoxy.Cache.Tests do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   alias GenSpoxy.Stores.Ets
 
@@ -13,6 +13,7 @@ defmodule GenSpoxy.Cache.Tests do
 
   setup_all do
     Ets.Supervisor.start_link()
+    Ets.reset_all!()
     SamplePrerender.Supervisor.start_link()
     :ok
   end

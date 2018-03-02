@@ -1,5 +1,5 @@
 defmodule GenSpoxy.Periodic.TasksExecutor.Tests do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   import Macros.Tests
 

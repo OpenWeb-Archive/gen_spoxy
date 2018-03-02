@@ -1,5 +1,5 @@
 defmodule GenSpoxy.Prerender.StressTests do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   import Macros.Tests
 
