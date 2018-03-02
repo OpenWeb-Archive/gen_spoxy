@@ -2,7 +2,7 @@ defmodule GenSpoxy.Prerender.Tests do
   use ExUnit.Case
 
   import ExUnit.CaptureLog
-  import GenSpoxy.Prerender.Macros
+  import Macros.Tests
 
   defprerender(FastPrerender, do_req: fn req -> {:ok, "response for #{inspect(req)}"} end)
 

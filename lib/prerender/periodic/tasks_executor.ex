@@ -1,7 +1,7 @@
-defmodule GenSpoxy.PeriodicPrerenderTasksExecutor do
+defmodule GenSpoxy.Prerender.PeriodicTasksExecutor do
   defmacro __using__(opts) do
     quote do
-      use GenSpoxy.PeriodicTasksExecutor, unquote(opts)
+      use GenSpoxy.Periodic.TasksExecutor, unquote(opts)
 
       @cache_module Keyword.get(unquote(opts), :cache_module)
 

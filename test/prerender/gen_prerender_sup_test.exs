@@ -1,7 +1,7 @@
 defmodule GenSpoxy.Prerender.Supervisor.Tests do
   use ExUnit.Case
 
-  import GenSpoxy.Prerender.Macros
+  import Macros.Tests
 
   defprerender(SupervisedPrerender, do_req: fn _ -> :ok end)
 
@@ -17,7 +17,8 @@ defmodule GenSpoxy.Prerender.Supervisor.Tests do
     children = Supervisor.which_children(SupervisedPrerender.Supervisor)
 
     # asserting all childern are of `prerender_module`
-    Enum.with_index(children, 0)
+    children
+    |> Enum.with_index(0)
     |> Enum.each(fn {child, i} ->
       partition = total_partitions - i
       child_name = "#{prerender_module}-#{partition}"

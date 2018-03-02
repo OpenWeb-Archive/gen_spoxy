@@ -1,7 +1,7 @@
 defmodule GenSpoxy.Prerender.StressTests do
   use ExUnit.Case
 
-  import GenSpoxy.Prerender.Macros
+  import Macros.Tests
 
   defprerender(
     StressedPrerender,

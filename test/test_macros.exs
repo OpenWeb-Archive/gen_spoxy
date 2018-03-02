@@ -1,4 +1,4 @@
-defmodule GenSpoxy.Prerender.Macros do
+defmodule Macros.Tests do
   defmacro defprerender(name, do_req: do_req) do
     quote do
       defmodule unquote(name) do

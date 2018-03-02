@@ -1,4 +1,4 @@
-defmodule GenSpoxy.PeriodicTasksExecutor do
+defmodule GenSpoxy.Periodic.TasksExecutor do
   @moduledoc """
   a behaviour for running prerender tasks periodically.
 

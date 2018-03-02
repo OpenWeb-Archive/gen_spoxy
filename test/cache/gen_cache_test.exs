@@ -3,7 +3,7 @@ defmodule GenSpoxy.Cache.Tests do
 
   alias GenSpoxy.Stores.Ets
 
-  import GenSpoxy.Prerender.Macros
+  import Macros.Tests
 
   defprerender(SamplePrerender, do_req: fn req -> {:ok, "response for #{inspect(req)}"} end)
 

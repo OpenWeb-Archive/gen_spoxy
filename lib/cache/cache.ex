@@ -2,11 +2,17 @@ defmodule Spoxy.Cache do
   @moduledoc """
   """
 
-  def async_get_or_fetch({prerender_module, store_module, tasks_executor_mod}, req, req_key, opts \\ []) do
+  def async_get_or_fetch(
+        {prerender_module, store_module, tasks_executor_mod},
+        req,
+        req_key,
+        opts \\ []
+      ) do
     Task.async(fn ->
       started = System.system_time(:milliseconds)
 
-      {:ok, resp} = get_or_fetch({prerender_module, store_module, tasks_executor_mod}, req, req_key, opts)
+      {:ok, resp} =
+        get_or_fetch({prerender_module, store_module, tasks_executor_mod}, req, req_key, opts)
 
       ended = System.system_time(:milliseconds)
 
@@ -15,8 +21,6 @@ defmodule Spoxy.Cache do
   end
 
   def get_or_fetch({prerender_module, store_module, tasks_executor_mod}, req, req_key, opts \\ []) do
-    {:ok, table_name} = Keyword.fetch(opts, :table_name)
-
     hit_or_miss = get(store_module, req_key, opts)
 
     case hit_or_miss do
@@ -59,7 +63,7 @@ defmodule Spoxy.Cache do
 
     case lookup do
       nil -> {:miss, "couldn't locate in cache"}
-      {resp, metadata} -> {:hit, lookup}
+      _   -> {:hit, lookup}
     end
   end
 
@@ -108,7 +112,7 @@ defmodule Spoxy.Cache do
     apply(store_module, :lookup_req, [table_name, req_key])
   end
 
-  def should_invalidate?(req, resp, metadata) do
+  def should_invalidate?(_req, _resp, metadata) do
     %{expires_at: expires_at} = metadata
 
     System.system_time(:milliseconds) > expires_at

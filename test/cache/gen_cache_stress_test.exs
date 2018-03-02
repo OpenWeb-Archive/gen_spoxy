@@ -3,7 +3,7 @@ defmodule GenSpoxy.Cache.StressTests do
 
   alias GenSpoxy.Stores.Ets
 
-  import GenSpoxy.Prerender.Macros
+  import Macros.Tests
 
   defprerender(
     Stress.SamplePrerender,

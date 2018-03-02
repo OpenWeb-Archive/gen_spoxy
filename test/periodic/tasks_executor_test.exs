@@ -1,7 +1,7 @@
-defmodule GenSpoxy.PeriodicPrerenderTasksExecutor.Tests do
+defmodule GenSpoxy.Periodic.TasksExecutor.Tests do
   use ExUnit.Case
 
-  import GenSpoxy.Prerender.Macros
+  import Macros.Tests
 
   alias GenSpoxy.Stores.Ets
 
@@ -20,7 +20,7 @@ defmodule GenSpoxy.PeriodicPrerenderTasksExecutor.Tests do
   end
 
   defmodule SampleCacheTasksExecutor do
-    use GenSpoxy.PeriodicPrerenderTasksExecutor,
+    use GenSpoxy.Prerender.PeriodicTasksExecutor,
       cache_module: Periodic.SampleCache,
       total_partitions: 1,
       sampling_interval: 100

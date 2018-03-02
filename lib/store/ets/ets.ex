@@ -2,7 +2,7 @@ defmodule GenSpoxy.Stores.Ets do
   use GenServer
   use GenSpoxy.Partitionable
 
-  @behaviour GenSpoxy.PrerenderStore
+  @behaviour GenSpoxy.Store
 
   @total_partitions GenSpoxy.Constants.total_partitions(:ets)
 

@@ -33,8 +33,7 @@ defmodule Spoxy.Prerender.Server do
   # callbacks
   @impl true
   def handle_call({:perform, prerender_module, req, req_key}, from, state) do
-    %{pid_ref: pid_ref, refs_resp: refs_resp, refs_req: refs_req, reqs_state: reqs_state} =
-      state
+    %{pid_ref: pid_ref, refs_resp: refs_resp, refs_req: refs_req, reqs_state: reqs_state} = state
 
     req_state = Map.get(reqs_state, req_key, %{listeners: [], status: :not_started})
 
@@ -47,47 +46,45 @@ defmodule Spoxy.Prerender.Server do
 
           # we first assert that `ref` and `pid` aren't in use (handling theoretical `pid`/`ref` collisions due to erlang VM reuse)
           if Map.has_key?(pid_ref, pid) || Map.has_key?(refs_resp, ref) ||
-            Map.has_key?(refs_req, ref) do
-              # this should never really happen
-              # see: https://stackoverflow.com/questions/46138098/can-erlang-reuse-process-ids-if-so-how-to-be-sure-of-correctness
-              Logger.error("resources (pid/ref) collisions")
+               Map.has_key?(refs_req, ref) do
+            # this should never really happen
+            # see: https://stackoverflow.com/questions/46138098/can-erlang-reuse-process-ids-if-so-how-to-be-sure-of-correctness
+            Logger.error("resources (pid/ref) collisions")
 
-              Process.exit(pid, :kill)
+            Process.exit(pid, :kill)
 
-              raise "fatal error"
-            end
+            raise "fatal error"
+          end
 
-            task = %{pid: pid, ref: ref}
+          task = %{pid: pid, ref: ref}
 
-            new_refs_req = Map.put_new(refs_req, ref, req_key)
+          # we'll sample the task completion status in `sample_task_interval` ms from now
+          schedule_sample_task(task, 1, @sample_task_interval)
 
-            # we'll sample the task completion status in `sample_task_interval` ms from now
-            schedule_sample_task(task, 1, @sample_task_interval)
+          new_running_req_state = %{
+            listeners: [{:active, from}],
+            status: :running,
+            task: task
+          }
 
-            new_running_req_state = %{
-              listeners: [{:active, from}],
-              status: :running,
-              task: task
-            }
+          {new_running_req_state, Map.put_new(pid_ref, pid, ref),
+           Map.put_new(refs_req, ref, req_key)}
 
-            {new_running_req_state, Map.put_new(pid_ref, pid, ref),
-              Map.put_new(refs_req, ref, req_key)}
+        :running ->
+          {%{req_state | listeners: [{:passive, from} | listeners]}, pid_ref, refs_req}
 
-            :running ->
-            {%{req_state | listeners: [{:passive, from} | listeners]}, pid_ref, refs_req}
-
-            _ ->
-            raise "unknown req status: '#{status}'"
+        _ ->
+          raise "unknown req status: '#{status}'"
       end
 
-      new_reqs_state = Map.put(reqs_state, req_key, new_req_state)
+    new_reqs_state = Map.put(reqs_state, req_key, new_req_state)
 
-      new_state = %{
-        state
-        | pid_ref: new_pid_ref,
+    new_state = %{
+      state
+      | pid_ref: new_pid_ref,
         refs_req: new_refs_req,
         reqs_state: new_reqs_state
-      }
+    }
 
     # the `handle_info` method will reply to `from` in the future (see: `handle_info({ref, resp}, state)`)
     # so we return `:noreply` for now
@@ -95,7 +92,7 @@ defmodule Spoxy.Prerender.Server do
   end
 
   @impl true
-  def handle_call(:get_state, from, state) do
+  def handle_call(:get_state, _from, state) do
     {:reply, state, state}
   end
 
@@ -127,13 +124,13 @@ defmodule Spoxy.Prerender.Server do
 
   @impl true
   def handle_info(
-    {:sample_task, %{ref: ref} = task, 1 = iteration},
-    %{refs_resp: refs_resp} = state
-  ) do
+        {:sample_task, %{ref: ref} = task, 1 = _iteration},
+        %{refs_resp: refs_resp} = state
+      ) do
     if Map.has_key?(refs_resp, ref) do
       Logger.info("1st sample task: performing cleanup for a terminated task")
 
-      {:noreply, new_state} =
+      {:noreply, _new_state} =
         do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
     else
       # task didn't finish... so we're going to sample it again in `sample_task_interval` ms
@@ -149,14 +146,14 @@ defmodule Spoxy.Prerender.Server do
 
   @impl true
   def handle_info(
-    {:sample_task, %{ref: ref, pid: pid} = task, 2 = iteration},
-    %{refs_resp: refs_resp} = state
-  ) do
-    {:noreply, new_state} =
+        {:sample_task, %{ref: ref} = task, 2 = _iteration},
+        %{refs_resp: refs_resp} = state
+      ) do
+    {:noreply, _new_state} =
       if Map.has_key?(refs_resp, ref) do
         Logger.info("2nd sample task: performing cleanup for a terminated task")
 
-        {:noreply, new_state} =
+        {:noreply, _new_state} =
           do_cleanup(task, state, delete_req_state: false, shutdown_task: false)
       else
         # seems the task is taking too much time, so we'll shut it down brutally and reset its state
@@ -165,15 +162,13 @@ defmodule Spoxy.Prerender.Server do
 
         Logger.info("2nd sample task: performing full cleanup (#{inspect(opts)})")
 
-        {:noreply, new_state} = do_cleanup(task, state, opts)
+        {:noreply, _new_state} = do_cleanup(task, state, opts)
       end
   end
 
   @impl true
   def handle_info({:EXIT, pid, {_error, _stacktrace}}, state) do
     %{pid_ref: pid_ref, refs_req: refs_req, reqs_state: reqs_state} = state
-
-    %{refs_req: refs_req, reqs_state: reqs_state} = state
 
     ref = Map.get(pid_ref, pid)
     req_key = Map.get(refs_req, ref)
@@ -183,7 +178,7 @@ defmodule Spoxy.Prerender.Server do
 
     notify_listeners(listeners, {:error, "error occurred"})
 
-    {:noreply, new_state} =
+    {:noreply, _new_state} =
       do_cleanup(%{ref: ref, pid: pid}, state, delete_req_state: true, shutdown_task: false)
   end
 
@@ -197,8 +192,7 @@ defmodule Spoxy.Prerender.Server do
 
   ## private
   defp do_cleanup(%{ref: ref, pid: pid} = task, state, opts \\ []) do
-    %{pid_ref: pid_ref, refs_resp: refs_resp, refs_req: refs_req, reqs_state: reqs_state} =
-      state
+    %{pid_ref: pid_ref, refs_resp: refs_resp, refs_req: refs_req, reqs_state: reqs_state} = state
 
     req_key = Map.get(refs_req, ref)
 

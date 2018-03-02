@@ -17,7 +17,7 @@ defmodule GenSpoxy.Prerender do
       end
 
       def perform(req, opts \\ []) do
-        server  = lookup_server_name(req)
+        server = lookup_server_name(req)
         req_key = calc_req_key(req)
 
         Spoxy.Prerender.Server.perform(server, __MODULE__, req, req_key, @perform_default_timeout)

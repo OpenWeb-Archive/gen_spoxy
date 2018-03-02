@@ -17,7 +17,7 @@ defmodule GenSpoxy.Cache do
 
       @tasks_executor_mod tasks_executor_mod
       defmodule @tasks_executor_mod do
-        use GenSpoxy.PeriodicPrerenderTasksExecutor, cache_module: cache_module
+        use GenSpoxy.Prerender.PeriodicTasksExecutor, cache_module: cache_module
       end
 
       defmodule String.to_atom("#{tasks_executor_mod}.Supervisor") do
@@ -26,12 +26,24 @@ defmodule GenSpoxy.Cache do
 
       def async_get_or_fetch(req, opts \\ []) do
         req_key = calc_req_key(req)
-        Spoxy.Cache.async_get_or_fetch({@prerender_module, @store_module, @tasks_executor_mod}, req, req_key, opts)
+
+        Spoxy.Cache.async_get_or_fetch(
+          {@prerender_module, @store_module, @tasks_executor_mod},
+          req,
+          req_key,
+          opts
+        )
       end
 
       def get_or_fetch(req, opts \\ []) do
         req_key = calc_req_key(req)
-        Spoxy.Cache.get_or_fetch({@prerender_module, @store_module, @tasks_executor_mod}, req, req_key, opts)
+
+        Spoxy.Cache.get_or_fetch(
+          {@prerender_module, @store_module, @tasks_executor_mod},
+          req,
+          req_key,
+          opts
+        )
       end
 
       @doc """
@@ -70,7 +82,7 @@ defmodule GenSpoxy.Cache do
         Spoxy.Cache.should_invalidate?(req, resp, metadata)
       end
 
-      defoverridable [should_invalidate?: 3]
+      defoverridable should_invalidate?: 3
 
       defp calc_req_key(req) do
         apply(@prerender_module, :calc_req_key, [req])

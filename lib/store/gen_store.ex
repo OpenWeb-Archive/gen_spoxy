@@ -1,6 +1,6 @@
-defmodule GenSpoxy.PrerenderStore do
+defmodule GenSpoxy.Store do
   @moduledoc """
-  Behaviour to be implemented by backing stores to be used in for `GenPrerenderCache`
+  Behaviour to be implemented by backing stores to be used in for `GenCache`
   """
 
   @doc """
@@ -12,11 +12,11 @@ defmodule GenSpoxy.PrerenderStore do
   storing the prerender 'request' -> 'response' pairs locally
   """
   @callback store_req!(
-              table_name :: term,
-              req :: any,
-              req_key :: any,
+              table_name :: String.t(),
+              req :: map(),
+              req_key :: term,
               resp :: any,
-              metadata :: any,
+              metadata :: map(),
               opts :: any
             ) :: any
 
