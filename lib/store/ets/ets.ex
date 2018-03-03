@@ -4,7 +4,9 @@ defmodule GenSpoxy.Stores.Ets do
 
   @behaviour GenSpoxy.Store
 
-  @total_partitions GenSpoxy.Constants.total_partitions()
+  alias GenSpoxy.Defaults
+
+  @total_partitions Defaults.total_partitions() * 10
 
   @moduledoc """
   implements the `GenSpoxy.Store` behaviour.

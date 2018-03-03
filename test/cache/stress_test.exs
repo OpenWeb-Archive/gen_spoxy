@@ -23,7 +23,7 @@ defmodule GenSpoxy.Cache.StressTests do
   end
 
   setup do
-    Ets.reset_all!
+    Ets.reset_all!()
     :ok
   end
 

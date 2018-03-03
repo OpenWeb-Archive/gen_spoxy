@@ -4,21 +4,25 @@ defmodule GenSpoxy.Cache do
   """
 
   defmacro __using__(opts) do
-    quote do
+    quote bind_quoted: [opts: opts] do
       alias Spoxy.Cache
       alias GenSpoxy.Stores.Ets
 
       @behaviour Spoxy.Cache.Behaviour
 
-      @store_module Keyword.get(unquote(opts), :store_module, Ets)
-      @prerender_module Keyword.get(unquote(opts), :prerender_module)
+      @store_module Keyword.get(opts, :store_module, Ets)
+      @prerender_module Keyword.get(opts, :prerender_module)
 
       cache_module = __MODULE__
-      tasks_executor_mod = String.to_atom("#{cache_module}TasksExecutor")
+      tasks_executor_mod = String.to_atom("#{cache_module}.TasksExecutor")
 
       @tasks_executor_mod tasks_executor_mod
+
+      config = Keyword.get(opts, :config, [])
+      executor_opts = Keyword.merge(config, cache_module: __MODULE__)
+
       defmodule @tasks_executor_mod do
-        use GenSpoxy.Prerender.PeriodicTasksExecutor, cache_module: cache_module
+        use GenSpoxy.Prerender.PeriodicTasksExecutor, executor_opts
       end
 
       tasks_executor_sup_mod = String.to_atom("#{tasks_executor_mod}.Supervisor")

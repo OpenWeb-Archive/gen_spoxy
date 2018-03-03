@@ -12,10 +12,12 @@ defmodule Spoxy.Prerender.Server do
   end
 
   def perform(server, prerender_module, req, req_key, opts) do
-    {:ok, timeout}  = Keyword.fetch(opts, :timeout)
+    {:ok, timeout} = Keyword.fetch(opts, :timeout)
     {:ok, interval} = Keyword.fetch(opts, :interval)
 
-    GenServer.call(server, {:perform, prerender_module, req, req_key, interval}, timeout)
+    command = {:perform, prerender_module, req, req_key, interval}
+
+    GenServer.call(server, command, timeout)
   end
 
   def get_partition_state(server) do
@@ -171,7 +173,9 @@ defmodule Spoxy.Prerender.Server do
 
         cleanup_opts = [delete_req_state: true, shutdown_task: true]
 
-        Logger.debug(fn -> "2nd sample task: performing full cleanup (#{inspect(cleanup_opts)})" end)
+        Logger.debug(fn ->
+          "2nd sample task: performing full cleanup (#{inspect(cleanup_opts)})"
+        end)
 
         do_cleanup(task, state, cleanup_opts)
       end

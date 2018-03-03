@@ -9,22 +9,29 @@ defmodule GenSpoxy.Periodic.TasksExecutor do
   @callback execute_tasks!(req_key :: String.t(), req_tasks :: Array) :: :ok
 
   defmacro __using__(opts) do
-    quote do
+    quote bind_quoted: [opts: opts] do
       use GenServer
       use GenSpoxy.Partitionable
 
-      alias GenSpoxy.Constants
+      alias GenSpoxy.Defaults
 
       @sampling_interval Keyword.get(
-                           unquote(opts),
-                           :periodic_tasks_executor_sampling_interval,
-                           Constants.periodic_tasks_executor_sampling_interval()
+                           opts,
+                           :periodic_sampling_interval,
+                           Defaults.periodic_sampling_interval()
                          )
 
+      default_partitions =
+        Keyword.get(
+          opts,
+          :total_partitions,
+          Defaults.total_partitions()
+        )
+
       @total_partitions Keyword.get(
-                          unquote(opts),
-                          :total_partitions,
-                          Constants.total_partitions()
+                          opts,
+                          :periodic_total_partitions,
+                          default_partitions
                         )
 
       def start_link(opts) do

@@ -1,7 +1,7 @@
 defmodule GenPrerender.MixProject do
   use Mix.Project
 
-  @version "0.0.12"
+  @version "0.0.14-beta.1"
 
   @description "caching made fun!"
 
@@ -17,7 +17,7 @@ defmodule GenPrerender.MixProject do
       name: "GenSpoxy",
       docs: [
         extras: ["README.md"],
-        source_url: "https://github.com/spotim/gen_spoxy",
+        source_url: "https://github.com/spotim/gen_spoxy"
       ]
     ]
   end

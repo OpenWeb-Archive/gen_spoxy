@@ -4,26 +4,40 @@ defmodule GenSpoxy.Prerender do
   """
 
   defmacro __using__(opts) do
-    quote do
+    quote bind_quoted: [opts: opts] do
       use GenSpoxy.Partitionable
 
+      alias GenSpoxy.Defaults
       alias Spoxy.Prerender.Server
 
       @behaviour Spoxy.Prerender.Behaviour
 
-      @default_timeout  Keyword.get(unquote(opts),
-                                    :prerender_timeout,
-                                    GenSpoxy.Constants.prerender_timeout()
-                                    )
+      config = Keyword.get(opts, :config, [])
 
-      @total_partitions Keyword.get(unquote(opts),
-                                    :total_partitions,
-                                    GenSpoxy.Constants.total_partitions())
+      @default_timeout Keyword.get(
+                         config,
+                         :prerender_timeout,
+                         Defaults.prerender_timeout()
+                       )
 
-      @sample_interval Keyword.get(unquote(opts),
-                                        :prerender_sampling_interval,
-                                        GenSpoxy.Constants.prerender_sampling_interval()
-                                        )
+      default_partitions =
+        Keyword.get(
+          config,
+          :total_partitions,
+          Defaults.total_partitions()
+        )
+
+      @total_partitions Keyword.get(
+                          config,
+                          :prerender_total_partitions,
+                          default_partitions
+                        )
+
+      @sample_interval Keyword.get(
+                         config,
+                         :prerender_sampling_interval,
+                         Defaults.prerender_sampling_interval()
+                       )
 
       def start_link(opts) do
         Server.start_link(opts)

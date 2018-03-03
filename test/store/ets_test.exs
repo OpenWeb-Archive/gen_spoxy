@@ -4,7 +4,7 @@ defmodule Spoxy.Stores.Ets.Tests do
   alias GenSpoxy.Stores.Ets
 
   setup do
-    Ets.reset_all!
+    Ets.reset_all!()
     :ok
   end
 
