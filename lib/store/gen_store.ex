@@ -1,6 +1,6 @@
 defmodule GenSpoxy.Store do
   @moduledoc """
-  Behaviour to be implemented by backing stores to be used in for `GenCache`
+  Behaviour to be implemented by backing stores
   """
 
   @doc """
@@ -20,5 +20,5 @@ defmodule GenSpoxy.Store do
   @doc """
   removing the cached 'request' -> 'response' pair using `req_key`
   """
-  @callback invalidate!(table_name :: term, req_key :: any) :: any
+  @callback invalidate!(table_name :: String.t(), req_key :: any) :: any
 end

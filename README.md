@@ -4,7 +4,7 @@ the `GenSpoxy` package consist of battle-tested abstractions that help creating 
 
 ### Advantages of `GenSpoxy`:
 1. Makes it very easy to create from scratch highly-concurrent applicative reverse-proxy
-that hold an internal short-lived (configurable) memory cache.
+that holds an internal short-lived (configurable) memory cache.
 1. CDN like Origin Shielding - when multiple clients ask for the same request and experience a cache miss,
 the calculation will be done only once
 1. Supports non-blocking mode for requests that are willing to receive stale cached data

@@ -3,14 +3,8 @@ defmodule Spoxy.Stores.Ets.Tests do
 
   alias GenSpoxy.Stores.Ets
 
-  setup_all do
-    Ets.Supervisor.start_link()
-    :ok
-  end
-
   setup do
-    Ets.reset_all!()
-    Ets.Supervisor.start_link()
+    Ets.reset_all!
     :ok
   end
 

@@ -12,14 +12,12 @@ defmodule GenSpoxy.Cache.Tests do
   end
 
   setup_all do
-    Ets.Supervisor.start_link()
-    Ets.reset_all!()
     SamplePrerender.Supervisor.start_link()
     :ok
   end
 
   setup do
-    Ets.reset_all!()
+    Ets.reset_all!
     :ok
   end
 

@@ -4,10 +4,10 @@ defmodule GenSpoxy.Stores.Ets do
 
   @behaviour GenSpoxy.Store
 
-  @total_partitions GenSpoxy.Constants.total_partitions(:ets)
+  @total_partitions GenSpoxy.Constants.total_partitions()
 
   @moduledoc """
-  `EtsCacheStore' implements the `GenSpoxy.Store` behaviour.
+  implements the `GenSpoxy.Store` behaviour.
   It stores its data under `ets` and it manages it in using sharded `GenServer`.
   """
 
@@ -52,7 +52,9 @@ defmodule GenSpoxy.Stores.Ets do
   used for testing
   """
   def reset_partition!(partition) do
-    GenServer.call(partition_server(partition), {:reset!, partition})
+    server = partition_server(partition)
+
+    GenServer.call(server, {:reset!, partition})
   end
 
   @doc """

@@ -3,8 +3,8 @@ defmodule GenSpoxy.Constants do
   gathers all the default settings
   """
 
-  def total_partitions(_ctx) do
-    System.schedulers_online() * 3
+  def total_partitions do
+    System.schedulers_online() * 10
   end
 
   def cache_ttl_ms do
@@ -20,6 +20,6 @@ defmodule GenSpoxy.Constants do
   end
 
   def periodic_tasks_executor_sampling_interval do
-    4000
+    1500
   end
 end

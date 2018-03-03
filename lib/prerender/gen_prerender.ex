@@ -3,7 +3,7 @@ defmodule GenSpoxy.Prerender do
   a behaviour for defining prerender
   """
 
-  defmacro __using__(_opts) do
+  defmacro __using__(opts) do
     quote do
       use GenSpoxy.Partitionable
 
@@ -11,22 +11,35 @@ defmodule GenSpoxy.Prerender do
 
       @behaviour Spoxy.Prerender.Behaviour
 
-      @default_timeout GenSpoxy.Constants.prerender_timeout()
-      @total_partitions GenSpoxy.Constants.total_partitions(:gen_prerender)
+      @default_timeout  Keyword.get(unquote(opts),
+                                    :prerender_timeout,
+                                    GenSpoxy.Constants.prerender_timeout()
+                                    )
+
+      @total_partitions Keyword.get(unquote(opts),
+                                    :total_partitions,
+                                    GenSpoxy.Constants.total_partitions())
+
+      @sample_interval Keyword.get(unquote(opts),
+                                        :prerender_sampling_interval,
+                                        GenSpoxy.Constants.prerender_sampling_interval()
+                                        )
 
       def start_link(opts) do
         Server.start_link(opts)
       end
 
-      def perform(req, opts \\ []) do
+      def perform(req) do
         server = lookup_server_name(req)
         req_key = calc_req_key(req)
 
-        Server.perform(server, __MODULE__, req, req_key, @default_timeout)
+        opts = [timeout: @default_timeout, interval: @sample_interval]
+
+        Server.perform(server, __MODULE__, req, req_key, opts)
       end
 
       def sample_task_interval do
-        Server.sample_task_interval()
+        @sample_interval
       end
 
       @impl true
@@ -52,6 +65,7 @@ defmodule GenSpoxy.Prerender do
       """
       def get_partition_state(partition) do
         server = partition_server(partition)
+
         Server.get_partition_state(server)
       end
 
@@ -64,13 +78,13 @@ defmodule GenSpoxy.Prerender do
         initial_state = %{total_listeners: 0, total_passive: 0}
 
         Enum.reduce(1..@total_partitions, initial_state, fn partition, acc ->
+          {:ok, total_listeners} = Map.fetch(acc, :total_listeners)
+          {:ok, total_passive} = Map.fetch(acc, :total_passive)
+
           partition_data = inspect_partition(partition)
 
           {:ok, listeners} = Map.fetch(partition_data, :total_listeners)
           {:ok, passive} = Map.fetch(partition_data, :total_passive)
-
-          {:ok, total_listeners} = Map.fetch(acc, :total_listeners)
-          {:ok, total_passive} = Map.fetch(acc, :total_passive)
 
           new_total_listeners = total_listeners + listeners
           new_total_passive = total_passive + passive

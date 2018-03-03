@@ -18,14 +18,12 @@ defmodule GenSpoxy.Cache.StressTests do
   end
 
   setup_all do
-    Ets.Supervisor.start_link()
     Stress.SamplePrerender.Supervisor.start_link()
     :ok
   end
 
   setup do
-    Ets.reset_all!()
-    Ets.Supervisor.start_link()
+    Ets.reset_all!
     :ok
   end
 

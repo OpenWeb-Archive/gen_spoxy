@@ -7,14 +7,15 @@ defmodule Spoxy.Prerender.Server do
 
   require Logger
 
-  @sample_task_interval GenSpoxy.Constants.prerender_sampling_interval()
-
   def start_link(opts) do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
-  def perform(server, prerender_module, req, req_key, timeout) do
-    GenServer.call(server, {:perform, prerender_module, req, req_key}, timeout)
+  def perform(server, prerender_module, req, req_key, opts) do
+    {:ok, timeout}  = Keyword.fetch(opts, :timeout)
+    {:ok, interval} = Keyword.fetch(opts, :interval)
+
+    GenServer.call(server, {:perform, prerender_module, req, req_key, interval}, timeout)
   end
 
   def get_partition_state(server) do
@@ -32,7 +33,7 @@ defmodule Spoxy.Prerender.Server do
 
   # callbacks
   @impl true
-  def handle_call({:perform, prerender_module, req, req_key}, from, state) do
+  def handle_call({:perform, prerender_module, req, req_key, interval}, from, state) do
     {:ok, pid_ref} = Map.fetch(state, :pid_ref)
     {:ok, refs_resp} = Map.fetch(state, :refs_resp)
     {:ok, refs_req} = Map.fetch(state, :refs_req)
@@ -65,8 +66,8 @@ defmodule Spoxy.Prerender.Server do
           task = %{pid: pid, ref: ref}
 
           # we'll sample the task completion status
-          # in `sample_task_interval` ms from now
-          schedule_sample_task(task, 1, @sample_task_interval)
+          # in `interval` ms from now
+          schedule_sample_task(task, 1, interval)
 
           new_running_req_state = %{
             listeners: [{:active, from}],
@@ -131,10 +132,10 @@ defmodule Spoxy.Prerender.Server do
   # else, we schedule a 2nd and final sample in the future
 
   @impl true
-  def handle_info(
-        {:sample_task, %{ref: ref} = task, 1 = _iteration},
-        %{refs_resp: refs_resp} = state
-      ) do
+  def handle_info({:first_iteration, task, interval}, state) do
+    {:ok, ref} = Map.fetch(task, :ref)
+    {:ok, refs_resp} = Map.fetch(state, :refs_resp)
+
     {:noreply, _} =
       if Map.has_key?(refs_resp, ref) do
         Logger.debug("1st sample task: performing cleanup for a terminated task")
@@ -143,8 +144,8 @@ defmodule Spoxy.Prerender.Server do
         do_cleanup(task, state, cleanup_opts)
       else
         # task didn't finish...
-        # we're going to sample it again in `sample_task_interval` ms
-        schedule_sample_task(task, 2, @sample_task_interval)
+        # we're going to sample it again in `interval` ms
+        schedule_sample_task(task, 2, interval)
         {:noreply, state}
       end
   end
@@ -155,10 +156,10 @@ defmodule Spoxy.Prerender.Server do
   # we'll brutally kill it and then cleanup the associated resources.
 
   @impl true
-  def handle_info(
-        {:sample_task, %{ref: ref} = task, 2 = _iteration},
-        %{refs_resp: refs_resp} = state
-      ) do
+  def handle_info({:second_iteration, task, _interval}, state) do
+    {:ok, ref} = Map.fetch(task, :ref)
+    {:ok, refs_resp} = Map.fetch(state, :refs_resp)
+
     {:noreply, _} =
       if Map.has_key?(refs_resp, ref) do
         Logger.debug("2nd sample task: performing cleanup for a terminated task")
@@ -168,11 +169,11 @@ defmodule Spoxy.Prerender.Server do
         # seems the task is taking too much time...
         # we'll shut it down brutally and reset its state
 
-        opts = [delete_req_state: true, shutdown_task: true]
+        cleanup_opts = [delete_req_state: true, shutdown_task: true]
 
-        Logger.debug("2nd sample task: performing full cleanup (#{inspect(opts)})")
+        Logger.debug(fn -> "2nd sample task: performing full cleanup (#{inspect(cleanup_opts)})" end)
 
-        do_cleanup(task, state, opts)
+        do_cleanup(task, state, cleanup_opts)
       end
   end
 
@@ -194,10 +195,6 @@ defmodule Spoxy.Prerender.Server do
 
   def handle_info(_msg, state) do
     {:noreply, state}
-  end
-
-  def sample_task_interval do
-    @sample_task_interval
   end
 
   ## private
@@ -243,7 +240,14 @@ defmodule Spoxy.Prerender.Server do
     end
   end
 
-  defp schedule_sample_task(task, iteration, time) do
-    Process.send_after(self(), {:sample_task, task, iteration}, time)
+  defp schedule_sample_task(task, iteration, interval) do
+    iteration_name =
+      case iteration do
+        1 -> :first_iteration
+        2 -> :second_iteration
+        _ -> raise "invalid iteration: #{iteration}"
+      end
+
+    Process.send_after(self(), {iteration_name, task, interval}, interval)
   end
 end
