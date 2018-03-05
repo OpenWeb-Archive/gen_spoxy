@@ -1,5 +1,13 @@
 defmodule Spoxy.Cache do
   @moduledoc """
+  responsible on orchestration of the request lifecycle.
+  in case the request is cached returns the response,
+  if the cached data is in the cache but with stale data,
+  the cached data will be returned when executed within `non-blocking` mode.
+
+
+  when the request isn't in the cache, trigger a calculation (called prerender)
+  and stores the result for later usage.
   """
 
   alias Spoxy.Cache.Janitor

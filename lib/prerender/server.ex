@@ -1,6 +1,6 @@
 defmodule Spoxy.Prerender.Server do
   @moduledoc """
-  Prender logic
+  responsible on managing prerender tasks
   """
 
   use GenServer

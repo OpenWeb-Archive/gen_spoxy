@@ -1,4 +1,9 @@
 defmodule GenSpoxy.Stores.Ets do
+  @moduledoc """
+  implements the `GenSpoxy.Store` behaviour.
+  it stores its data under `ets` and it manages it in using sharded `GenServer`.
+  """
+
   use GenServer
   use GenSpoxy.Partitionable
 
@@ -7,11 +12,6 @@ defmodule GenSpoxy.Stores.Ets do
   alias GenSpoxy.Defaults
 
   @total_partitions Defaults.total_partitions() * 10
-
-  @moduledoc """
-  implements the `GenSpoxy.Store` behaviour.
-  It stores its data under `ets` and it manages it in using sharded `GenServer`.
-  """
 
   # API
   def start_link(opts \\ []) do
