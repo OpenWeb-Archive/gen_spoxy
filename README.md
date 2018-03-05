@@ -39,7 +39,7 @@ end
 # usage
 opts = [
   table_name: "sample-table",
-  do_janitor_work: true, # wheter we do garbage collection of expired data
+  do_janitor_work: true, # whether we garbage collect expired data
   ttl_ms: 5_000 # the data is considered non-stale for 5 seconds
 ]
 
@@ -48,5 +48,5 @@ req = %{url: "https://www.very-slow-server.com", platform: "mobile"}
 
 SampleCache.get_or_fetch(req, opts)  # blocking manner
 
-SampleCache.async_get_or_fetch(req, opts)  # async manner (we're OK with accepting stale response)
+SampleCache.async_get_or_fetch(req, opts)  # async manner (we're OK with accepting a stale response)
 ```
