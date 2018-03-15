@@ -50,7 +50,7 @@ defmodule GenSpoxy.Periodic.TasksExecutor.Tests do
 
     :timer.sleep(250)
     Periodic.SamplePrerender.inspect_all_partitions()
-    %{total_listeners: 10, total_passive: 9} = Periodic.SamplePrerender.inspect_all_partitions()
+    %{total_listeners: 1, total_passive: 0} = Periodic.SamplePrerender.inspect_all_partitions()
 
     :timer.sleep(300)
     %{total_listeners: 0, total_passive: 0} = Periodic.SamplePrerender.inspect_all_partitions()

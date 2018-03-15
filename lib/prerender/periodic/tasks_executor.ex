@@ -9,12 +9,15 @@ defmodule GenSpoxy.Prerender.PeriodicTasksExecutor do
 
       @cache_module Keyword.get(opts, :cache_module)
 
-      def execute_tasks!(_req_key, req_tasks) do
-        Enum.each(req_tasks, fn [req, opts] ->
-          Task.start(fn ->
-            apply(@cache_module, :refresh_req!, [req, opts])
-          end)
-        end)
+      def execute_tasks!(_req_key, []), do: :ok
+
+      def execute_tasks!(req_key, [task|_]=_req_tasks) do
+        [req, opts] = task
+
+        # since all `_req_tasks` are exactly the same (since all have the same `req_key`)
+        # we execute only one task
+
+        apply(@cache_module, :refresh_req!, [req, opts])
 
         :ok
       end

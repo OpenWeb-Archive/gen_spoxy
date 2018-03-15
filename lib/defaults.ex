@@ -8,7 +8,7 @@ defmodule GenSpoxy.Defaults do
   end
 
   def prerender_timeout do
-    5000
+    6000
   end
 
   def prerender_sampling_interval do
@@ -17,6 +17,6 @@ defmodule GenSpoxy.Defaults do
 
   # for background tasks
   def periodic_sampling_interval do
-    4000
+    5000
   end
 end
