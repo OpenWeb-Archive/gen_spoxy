@@ -1,5 +1,8 @@
 ## Changelog
 
+## v0.0.14-beta.2
+prerender periodic tasks executor optimization
+
 ## v0.0.14-beta.1
 * renaming `Constants` to `Defaults`
 * changing the defaults to suit most applications out-of-the-box
