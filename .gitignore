@@ -24,4 +24,6 @@ gen_spoxy-*.tar
 
 *.swp
 
+tags
+
 .DS_Store
