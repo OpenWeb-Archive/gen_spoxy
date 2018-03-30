@@ -1,6 +1,6 @@
-defmodule Spoxy.Prerender.Server do
+defmodule Spoxy.Query.Server do
   @moduledoc """
-  responsible on managing prerender tasks
+  responsible on managing query tasks
   """
 
   use GenServer
@@ -11,11 +11,11 @@ defmodule Spoxy.Prerender.Server do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
-  def perform(server, prerender_module, req, req_key, opts) do
+  def perform(server, query_module, req, req_key, opts) do
     {:ok, timeout} = Keyword.fetch(opts, :timeout)
     {:ok, interval} = Keyword.fetch(opts, :interval)
 
-    command = {:perform, prerender_module, req, req_key, interval}
+    command = {:perform, query_module, req, req_key, interval}
 
     GenServer.call(server, command, timeout)
   end
@@ -35,7 +35,7 @@ defmodule Spoxy.Prerender.Server do
 
   # callbacks
   @impl true
-  def handle_call({:perform, prerender_module, req, req_key, interval}, from, state) do
+  def handle_call({:perform, query_module, req, req_key, interval}, from, state) do
     {:ok, pid_ref} = Map.fetch(state, :pid_ref)
     {:ok, refs_resp} = Map.fetch(state, :refs_resp)
     {:ok, refs_req} = Map.fetch(state, :refs_req)
@@ -49,7 +49,7 @@ defmodule Spoxy.Prerender.Server do
     {new_req_state, new_pid_ref, new_refs_req} =
       case status do
         :not_started ->
-          task = Task.async(prerender_module, :do_req, [req])
+          task = Task.async(query_module, :do_req, [req])
           %Task{ref: ref, pid: pid} = task
 
           # we first assert that `ref` and `pid` aren't in use.
@@ -107,7 +107,7 @@ defmodule Spoxy.Prerender.Server do
     {:reply, state, state}
   end
 
-  # this method expects the response of the prerender task
+  # this method expects the response of the query task
   @impl true
   def handle_info({ref, resp}, state) do
     %{refs_resp: refs_resp, refs_req: refs_req, reqs_state: reqs_state} = state
@@ -129,7 +129,7 @@ defmodule Spoxy.Prerender.Server do
     {:noreply, new_state}
   end
 
-  # here we sample for the 1st time a running prerender task.
+  # here we sample for the 1st time a running query task.
   # In case the task has been completed we cleanup its resources,
   # else, we schedule a 2nd and final sample in the future
 
@@ -152,7 +152,7 @@ defmodule Spoxy.Prerender.Server do
       end
   end
 
-  # Here we perform the 2nd and final sample for a prerender task.
+  # Here we perform the 2nd and final sample for a query task.
   # If the task has been completed we are left with cleaning up its resources,
   # else, if task is still on-going (should be a very rare case),
   # we'll brutally kill it and then cleanup the associated resources.

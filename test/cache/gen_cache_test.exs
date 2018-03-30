@@ -5,14 +5,14 @@ defmodule GenSpoxy.Cache.Tests do
 
   import Macros.Tests
 
-  defprerender(SamplePrerender, do_req: fn req -> {:ok, "response for #{inspect(req)}"} end)
+  defquery(SampleQuery, do_req: fn req -> {:ok, "response for #{inspect(req)}"} end)
 
   defmodule SampleCache do
-    use GenSpoxy.Cache, prerender_module: SamplePrerender
+    use GenSpoxy.Cache, query_module: SampleQuery
   end
 
   setup_all do
-    SamplePrerender.Supervisor.start_link()
+    SampleQuery.Supervisor.start_link()
     :ok
   end
 
@@ -21,8 +21,8 @@ defmodule GenSpoxy.Cache.Tests do
     :ok
   end
 
-  test "cache miss triggers prerender-fetch and stores the response" do
-    table_name = "table-prerender-cache-test-1"
+  test "cache miss triggers query-fetch and stores the response" do
+    table_name = "table-query-cache-test-1"
     req = ["req-cache-test-1", "newest"]
     ttl_ms = 200
 
@@ -55,13 +55,13 @@ defmodule GenSpoxy.Cache.Tests do
     assert {:ok, "response for [\"req-cache-test-1\", \"newest\"]"} = resp
 
     # invalidate
-    req_key = SamplePrerender.calc_req_key(req)
+    req_key = SampleQuery.calc_req_key(req)
     Ets.invalidate!(table_name, req_key)
     assert {:miss, _reason} = SampleCache.get(req, table_name: table_name)
   end
 
   test "stale data invalidates the request when `blocking=true`" do
-    table_name = "table-prerender-cache-test-2"
+    table_name = "table-query-cache-test-2"
     req = ["req-cache-test-2", "newest"]
     ttl_ms = 200
 
@@ -119,7 +119,7 @@ defmodule GenSpoxy.Cache.Tests do
   end
 
   test "returns stale data and refreshes the cache in the background when `blocking=false` (which is the default setting)" do
-    table_name = "table-prerender-cache-test-3"
+    table_name = "table-query-cache-test-3"
     req = ["req-cache-test-3", "newest"]
     ttl_ms = 200
 
@@ -177,7 +177,7 @@ defmodule GenSpoxy.Cache.Tests do
   end
 
   test "cache auto-invalidates expired data via a background janitor work" do
-    table_name = "table-prerender-cache-test-4"
+    table_name = "table-query-cache-test-4"
     req = ["req-cache-test-4", "newest"]
     ttl_ms = 200
 
@@ -208,7 +208,7 @@ defmodule GenSpoxy.Cache.Tests do
   end
 
   test "cache skips janitor work when `do_janitor_work=false`" do
-    table_name = "table-prerender-cache-test-5"
+    table_name = "table-query-cache-test-5"
     req = ["req-cache-test-5", "newest"]
     ttl_ms = 200
 

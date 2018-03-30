@@ -5,8 +5,8 @@ defmodule GenSpoxy.Periodic.TasksExecutor.Tests do
 
   alias GenSpoxy.Stores.Ets
 
-  defprerender(
-    Periodic.SamplePrerender,
+  defquery(
+    Periodic.SampleQuery,
     do_req: fn req ->
       :timer.sleep(300)
       {:ok, "response for #{inspect(req)}"}
@@ -16,7 +16,7 @@ defmodule GenSpoxy.Periodic.TasksExecutor.Tests do
   defmodule Periodic.SampleCache do
     use GenSpoxy.Cache,
       store_module: Ets,
-      prerender_module: Periodic.SamplePrerender,
+      query_module: Periodic.SampleQuery,
       config: [total_partitions: 1, periodic_sampling_interval: 100]
   end
 
@@ -25,7 +25,7 @@ defmodule GenSpoxy.Periodic.TasksExecutor.Tests do
   alias __MODULE__.Periodic.SampleCache.TasksExecutor
 
   setup_all do
-    Periodic.SamplePrerender.Supervisor.start_link()
+    Periodic.SampleQuery.Supervisor.start_link()
     :ok
   end
 
@@ -49,10 +49,10 @@ defmodule GenSpoxy.Periodic.TasksExecutor.Tests do
     end)
 
     :timer.sleep(250)
-    Periodic.SamplePrerender.inspect_all_partitions()
-    %{total_listeners: 1, total_passive: 0} = Periodic.SamplePrerender.inspect_all_partitions()
+    Periodic.SampleQuery.inspect_all_partitions()
+    %{total_listeners: 1, total_passive: 0} = Periodic.SampleQuery.inspect_all_partitions()
 
     :timer.sleep(300)
-    %{total_listeners: 0, total_passive: 0} = Periodic.SamplePrerender.inspect_all_partitions()
+    %{total_listeners: 0, total_passive: 0} = Periodic.SampleQuery.inspect_all_partitions()
   end
 end

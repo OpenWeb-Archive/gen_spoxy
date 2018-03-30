@@ -1,8 +1,8 @@
 defmodule Macros.Tests do
-  defmacro defprerender(name, opts \\ [], do_req: do_req) do
+  defmacro defquery(name, opts \\ [], do_req: do_req) do
     quote do
       defmodule unquote(name) do
-        use GenSpoxy.Prerender, unquote(opts)
+        use GenSpoxy.Query, unquote(opts)
 
         @impl true
         def do_req(req) do

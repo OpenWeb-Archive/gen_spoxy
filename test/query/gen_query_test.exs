@@ -1,32 +1,32 @@
-defmodule GenSpoxy.Prerender.Tests do
+defmodule GenSpoxy.Query.Tests do
   use ExUnit.Case, async: false
 
   import ExUnit.CaptureLog
   import Macros.Tests
 
-  defprerender(FastPrerender, do_req: fn req -> {:ok, "response for #{inspect(req)}"} end)
+  defquery(FastQuery, do_req: fn req -> {:ok, "response for #{inspect(req)}"} end)
 
-  defprerender(
-    SlowPrerender,
+  defquery(
+    SlowQuery,
     do_req: fn req ->
-      :timer.sleep(SlowPrerender.sample_task_interval() + 50)
+      :timer.sleep(SlowQuery.sample_task_interval() + 50)
       {:ok, "response for #{inspect(req)}"}
     end
   )
 
-  defprerender(FrozenPrerender, do_req: fn _ -> :timer.sleep(:infinity) end)
-  defprerender(FailingPrerender, do_req: fn _ -> {:error, "error occurred"} end)
-  defprerender(RaisingErrorsPrerender, do_req: fn _ -> raise "oops..." end)
+  defquery(FrozenQuery, do_req: fn _ -> :timer.sleep(:infinity) end)
+  defquery(FailingQuery, do_req: fn _ -> {:error, "error occurred"} end)
+  defquery(RaisingQuery, do_req: fn _ -> raise "oops..." end)
 
-  test "fast-prerender, cleanup will take place after 1st sampling" do
-    {:ok, pid} = FastPrerender.Supervisor.start_link()
+  test "fast-query, cleanup will take place after 1st sampling" do
+    {:ok, pid} = FastQuery.Supervisor.start_link()
 
     fun = fn ->
       req = ["req-fast-1", "newest"]
-      resp = FastPrerender.perform(req)
+      resp = FastQuery.perform(req)
       assert resp == {{:ok, "response for [\"req-fast-1\", \"newest\"]"}, :active}
 
-      state = FastPrerender.get_req_state(req)
+      state = FastQuery.get_req_state(req)
 
       # assert `reqs_state` is empty
       assert Map.get(state, :reqs_state) == %{}
@@ -36,72 +36,72 @@ defmodule GenSpoxy.Prerender.Tests do
 
       # 1st sample takes place after `sample_task_interval`, so we'll wait a bit longer
       # to let the cleanup process execute for sure
-      :timer.sleep(FastPrerender.sample_task_interval() + 50)
+      :timer.sleep(FastQuery.sample_task_interval() + 50)
 
       # cleanup has been executed
-      state = FastPrerender.get_req_state(req)
+      state = FastQuery.get_req_state(req)
 
       assert %{pid_ref: %{}, refs_resp: %{}, refs_req: %{}, reqs_state: %{}} == state
     end
 
     assert capture_log(fun) =~ "1st sample task: performing cleanup"
 
-    {:error, {:already_started, ^pid}} = FastPrerender.Supervisor.start_link()
+    {:error, {:already_started, ^pid}} = FastQuery.Supervisor.start_link()
   end
 
-  test "slow prerender, cleanup will take place after the 2nd sample" do
-    {:ok, pid} = SlowPrerender.Supervisor.start_link()
+  test "slow query, cleanup will take place after the 2nd sample" do
+    {:ok, pid} = SlowQuery.Supervisor.start_link()
 
     fun = fn ->
       req = ["req-slow-1", "newest"]
-      resp = SlowPrerender.perform(req)
+      resp = SlowQuery.perform(req)
       assert resp == {{:ok, "response for [\"req-slow-1\", \"newest\"]"}, :active}
 
-      state = SlowPrerender.get_req_state(req)
+      state = SlowQuery.get_req_state(req)
 
       # assert `reqs_state` is empty
       assert Map.get(state, :reqs_state) == %{}
 
-      :timer.sleep(SlowPrerender.sample_task_interval() + 50)
+      :timer.sleep(SlowQuery.sample_task_interval() + 50)
 
       # cleanup has been executed
-      state = SlowPrerender.get_req_state(req)
+      state = SlowQuery.get_req_state(req)
       assert %{pid_ref: %{}, refs_resp: %{}, refs_req: %{}, reqs_state: %{}} == state
     end
 
     assert capture_log(fun) =~ "2nd sample task: performing cleanup"
 
-    {:error, {:already_started, ^pid}} = SlowPrerender.Supervisor.start_link()
+    {:error, {:already_started, ^pid}} = SlowQuery.Supervisor.start_link()
   end
 
-  test "raising errors prerender, cleanup will take place after 1st sampling" do
-    {:ok, pid} = RaisingErrorsPrerender.Supervisor.start_link()
+  test "raising errors query, cleanup will take place after 1st sampling" do
+    {:ok, pid} = RaisingQuery.Supervisor.start_link()
 
     fun = fn ->
       req = ["req-raising-1", "newest"]
-      assert {{:error, "error occurred"}, :active} == RaisingErrorsPrerender.perform(req)
+      assert {{:error, "error occurred"}, :active} == RaisingQuery.perform(req)
 
-      state = RaisingErrorsPrerender.get_req_state(req)
+      state = RaisingQuery.get_req_state(req)
 
       # cleanup hasn been executed
       assert %{pid_ref: %{}, refs_resp: %{}, refs_req: %{}, reqs_state: %{}} == state
     end
 
-    # silencing the error raised by `RaisingErrorsPrerender`
+    # silencing the error raised by `RaisingQuery`
     capture_log(fun)
 
-    {:error, {:already_started, ^pid}} = RaisingErrorsPrerender.Supervisor.start_link()
+    {:error, {:already_started, ^pid}} = RaisingQuery.Supervisor.start_link()
   end
 
-  test "failing prerender, cleanup will take place after 1st sampling" do
-    {:ok, pid} = FailingPrerender.Supervisor.start_link()
+  test "failing query, cleanup will take place after 1st sampling" do
+    {:ok, pid} = FailingQuery.Supervisor.start_link()
 
     fun = fn ->
       req = ["req-failing-1", "newest"]
-      resp = FailingPrerender.perform(req)
+      resp = FailingQuery.perform(req)
       assert resp == {{:error, "error occurred"}, :active}
 
-      state = FailingPrerender.get_req_state(req)
+      state = FailingQuery.get_req_state(req)
 
       # assert `reqs_state` is empty
       assert %{reqs_state: %{}} = state
@@ -111,24 +111,24 @@ defmodule GenSpoxy.Prerender.Tests do
 
       # 1st sample takes place after `sample_task_interval`, so we'll wait a bit longer
       # to let the cleanup process execute
-      :timer.sleep(FailingPrerender.sample_task_interval())
+      :timer.sleep(FailingQuery.sample_task_interval())
 
       # cleanup has been executed
-      state = FailingPrerender.get_req_state(req)
+      state = FailingQuery.get_req_state(req)
       assert %{pid_ref: %{}, refs_resp: %{}, refs_req: %{}, reqs_state: %{}} == state
     end
 
     assert capture_log(fun) =~ "1st sample task: performing cleanup"
 
-    {:error, {:already_started, ^pid}} = FailingPrerender.Supervisor.start_link()
+    {:error, {:already_started, ^pid}} = FailingQuery.Supervisor.start_link()
   end
 
-  test "frozen prerender, cleanup will brutally kill the task" do
-    {:ok, pid} = FrozenPrerender.Supervisor.start_link()
+  test "frozen query, cleanup will brutally kill the task" do
+    {:ok, pid} = FrozenQuery.Supervisor.start_link()
 
     fun = fn ->
       try do
-        FrozenPrerender.perform(["req-frozen-1", "newest"])
+        FrozenQuery.perform(["req-frozen-1", "newest"])
       catch
         :exit, {:timeout, _} -> ""
       end
@@ -137,6 +137,6 @@ defmodule GenSpoxy.Prerender.Tests do
     assert capture_log(fun) =~
              "2nd sample task: performing full cleanup ([delete_req_state: true, shutdown_task: true])"
 
-    {:error, {:already_started, ^pid}} = FrozenPrerender.Supervisor.start_link()
+    {:error, {:already_started, ^pid}} = FrozenQuery.Supervisor.start_link()
   end
 end

@@ -1,6 +1,6 @@
-defmodule GenSpoxy.Prerender do
+defmodule GenSpoxy.Query do
   @moduledoc """
-  a behaviour for defining prerender
+  a behaviour for defining a query
   """
 
   defmacro __using__(opts) do
@@ -8,16 +8,16 @@ defmodule GenSpoxy.Prerender do
       use GenSpoxy.Partitionable
 
       alias GenSpoxy.Defaults
-      alias Spoxy.Prerender.Server
+      alias Spoxy.Query.Server
 
-      @behaviour Spoxy.Prerender.Behaviour
+      @behaviour Spoxy.Query.Behaviour
 
       config = Keyword.get(opts, :config, [])
 
       @default_timeout Keyword.get(
                          config,
-                         :prerender_timeout,
-                         Defaults.prerender_timeout()
+                         :query_timeout,
+                         Defaults.query_timeout()
                        )
 
       default_partitions =
@@ -29,14 +29,14 @@ defmodule GenSpoxy.Prerender do
 
       @total_partitions Keyword.get(
                           config,
-                          :prerender_total_partitions,
+                          :query_total_partitions,
                           default_partitions
                         )
 
       @sample_interval Keyword.get(
                          config,
-                         :prerender_sampling_interval,
-                         Defaults.prerender_sampling_interval()
+                         :query_sampling_interval,
+                         Defaults.query_sampling_interval()
                        )
 
       def start_link(opts) do
@@ -141,11 +141,11 @@ defmodule GenSpoxy.Prerender do
         partition_server(partition)
       end
 
-      prerender_module = __MODULE__
-      prerender_sup_module = String.to_atom("#{prerender_module}.Supervisor")
+      query_module = __MODULE__
+      query_sup_module = String.to_atom("#{query_module}.Supervisor")
 
-      defmodule prerender_sup_module do
-        use GenSpoxy.Prerender.Supervisor, supervised_module: prerender_module
+      defmodule query_sup_module do
+        use GenSpoxy.Query.Supervisor, supervised_module: query_module
       end
     end
   end

@@ -9,7 +9,7 @@ defmodule GenSpoxy.Store do
   @callback lookup_req(table_name :: term, req_key :: any) :: any
 
   @doc """
-  storing the prerender 'request' -> 'response' pairs locally
+  storing a query 'request' -> 'response' pairs locally
   """
   @callback store_req!(
               table_name :: String.t(),

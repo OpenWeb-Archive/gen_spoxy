@@ -7,11 +7,11 @@ defmodule GenSpoxy.Defaults do
     System.schedulers_online() * 4
   end
 
-  def prerender_timeout do
+  def query_timeout do
     6000
   end
 
-  def prerender_sampling_interval do
+  def query_sampling_interval do
     500
   end
 

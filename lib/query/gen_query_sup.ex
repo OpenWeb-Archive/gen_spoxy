@@ -1,7 +1,7 @@
-defmodule GenSpoxy.Prerender.Supervisor do
+defmodule GenSpoxy.Query.Supervisor do
   @moduledoc """
-  a prerender dedicated supervisor.
-  the prerender supervised module is assumed to implement the `GenSpoxy.Partitionable` behaviour
+  a query dedicated supervisor.
+  the query supervised module is assumed to implement the `GenSpoxy.Partitionable` behaviour
   """
 
   defmacro __using__(opts) do

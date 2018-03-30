@@ -1,6 +1,6 @@
-defmodule GenSpoxy.Prerender.PeriodicTasksExecutor do
+defmodule GenSpoxy.Query.PeriodicTasksExecutor do
   @moduledoc """
-  responsible on periodically executing prerender tasks.
+  responsible on periodically executing query tasks.
   """
 
   defmacro __using__(opts) do

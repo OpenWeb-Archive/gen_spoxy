@@ -1,6 +1,6 @@
 defmodule GenSpoxy.Cache do
   @moduledoc """
-  This behaviour is responsible for implementing a caching layer on top of the prerender
+  This behaviour is responsible for implementing a caching layer on top of the query
   """
 
   defmacro __using__(opts) do
@@ -11,7 +11,7 @@ defmodule GenSpoxy.Cache do
       @behaviour Spoxy.Cache.Behaviour
 
       @store_module Keyword.get(opts, :store_module, Ets)
-      @prerender_module Keyword.get(opts, :prerender_module)
+      @query_module Keyword.get(opts, :query_module)
 
       cache_module = __MODULE__
       tasks_executor_mod = String.to_atom("#{cache_module}.TasksExecutor")
@@ -22,25 +22,25 @@ defmodule GenSpoxy.Cache do
       executor_opts = Keyword.merge(config, cache_module: __MODULE__)
 
       defmodule @tasks_executor_mod do
-        use GenSpoxy.Prerender.PeriodicTasksExecutor, executor_opts
+        use GenSpoxy.Query.PeriodicTasksExecutor, executor_opts
       end
 
       tasks_executor_sup_mod = String.to_atom("#{tasks_executor_mod}.Supervisor")
 
       defmodule tasks_executor_sup_mod do
-        use GenSpoxy.Prerender.Supervisor, supervised_module: tasks_executor_mod
+        use GenSpoxy.Query.Supervisor, supervised_module: tasks_executor_mod
       end
 
       def async_get_or_fetch(req, opts \\ []) do
         req_key = calc_req_key(req)
-        mods = {@prerender_module, @store_module, @tasks_executor_mod}
+        mods = {@query_module, @store_module, @tasks_executor_mod}
 
         Cache.async_get_or_fetch(mods, req, req_key, opts)
       end
 
       def get_or_fetch(req, opts \\ []) do
         req_key = calc_req_key(req)
-        mods = {@prerender_module, @store_module, @tasks_executor_mod}
+        mods = {@query_module, @store_module, @tasks_executor_mod}
 
         Cache.get_or_fetch(mods, req, req_key, opts)
       end
@@ -57,7 +57,7 @@ defmodule GenSpoxy.Cache do
 
       def refresh_req!(req, opts) do
         req_key = calc_req_key(req)
-        mods = {@prerender_module, @store_module}
+        mods = {@query_module, @store_module}
         Cache.refresh_req!(mods, req, req_key, opts)
       end
 
@@ -66,7 +66,7 @@ defmodule GenSpoxy.Cache do
       end
 
       def do_req(req) do
-        Cache.do_req(@prerender_module, req)
+        Cache.do_req(@query_module, req)
       end
 
       def store_req!(opts) do
@@ -85,7 +85,7 @@ defmodule GenSpoxy.Cache do
       # defoverridable [should_invalidate?: 3]
 
       defp calc_req_key(req) do
-        apply(@prerender_module, :calc_req_key, [req])
+        apply(@query_module, :calc_req_key, [req])
       end
     end
   end

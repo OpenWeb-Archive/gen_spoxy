@@ -6,7 +6,7 @@ defmodule Spoxy.Cache do
   the cached data will be returned when executed within `non-blocking` mode.
 
 
-  when the request isn't in the cache, trigger a calculation (called prerender)
+  when the request isn't in the cache, trigger a query process
   and stores the result for later usage.
   """
 
@@ -25,7 +25,7 @@ defmodule Spoxy.Cache do
   end
 
   def get_or_fetch(mods, req, req_key, opts \\ []) do
-    {prerender_module, store_module, tasks_executor_mod} = mods
+    {query_module, store_module, tasks_executor_mod} = mods
 
     hit_or_miss = get(store_module, req_key, opts)
 
@@ -41,7 +41,7 @@ defmodule Spoxy.Cache do
 
           if blocking do
             # we don't want the stale data, so force recalculation
-            refresh_req!({prerender_module, store_module}, req, req_key, opts)
+            refresh_req!({query_module, store_module}, req, req_key, opts)
           else
             # we'll spawn a background task in a fire-and-forget manner
             # that will make sure the stale data is refreshed
@@ -60,7 +60,7 @@ defmodule Spoxy.Cache do
 
       {:miss, _} ->
         # we have nothing in the cache, we need to calculate the request's value
-        refresh_req!({prerender_module, store_module}, req, req_key, opts)
+        refresh_req!({query_module, store_module}, req, req_key, opts)
     end
   end
 
@@ -74,8 +74,8 @@ defmodule Spoxy.Cache do
     end
   end
 
-  def refresh_req!({prerender_module, store_module}, req, req_key, opts) do
-    case do_req(prerender_module, req) do
+  def refresh_req!({query_module, store_module}, req, req_key, opts) do
+    case do_req(query_module, req) do
       {{:ok, resp}, :active} ->
         {:ok, table_name} = Keyword.fetch(opts, :table_name)
         {:ok, ttl_ms} = Keyword.fetch(opts, :ttl_ms)
@@ -108,8 +108,8 @@ defmodule Spoxy.Cache do
     end
   end
 
-  def do_req(prerender_module, req) do
-    apply(prerender_module, :perform, [req])
+  def do_req(query_module, req) do
+    apply(query_module, :perform, [req])
   end
 
   def store_req!(store_module, opts) do

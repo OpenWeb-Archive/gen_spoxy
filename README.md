@@ -19,11 +19,11 @@ the calculation will be done only once
 ### usage example:
 ```elixir
 defmodule SampleCache do
-  use GenSpoxy.Cache, prerender_module: SamplePrerender
+  use GenSpoxy.Cache, query_module: SampleQuery
 end
 
-defmodule SamplePrerender do
-  use GenSpoxy.Prerender
+defmodule SampleQuery do
+  use GenSpoxy.Query
 
   @impl true
   def do_req(req) do

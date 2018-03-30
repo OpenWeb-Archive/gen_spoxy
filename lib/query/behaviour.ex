@@ -1,4 +1,4 @@
-defmodule Spoxy.Prerender.Behaviour do
+defmodule Spoxy.Query.Behaviour do
   @moduledoc """
   executing the request itself
   """
