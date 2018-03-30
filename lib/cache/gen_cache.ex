@@ -65,18 +65,6 @@ defmodule GenSpoxy.Cache do
         {:ok, resp, total} = Task.await(task)
       end
 
-      def do_req(req) do
-        Cache.do_req(@query_module, req)
-      end
-
-      def store_req!(opts) do
-        Cache.store_req!(@store_module, opts)
-      end
-
-      def lookup_req(table_name, req_key) do
-        Cache.lookup_req(@store_module, table_name, req_key)
-      end
-
       @impl true
       def should_invalidate?(req, resp, metadata) do
         Cache.should_invalidate?(req, resp, metadata)
