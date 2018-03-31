@@ -5,7 +5,6 @@ defmodule Spoxy.Cache do
   if the cached data is in the cache but with stale data,
   the cached data will be returned when executed within `non-blocking` mode.
 
-
   when the request isn't in the cache, trigger a query process
   and stores the result for later usage.
   """
@@ -27,6 +26,7 @@ defmodule Spoxy.Cache do
   def get_or_fetch(mods, req, req_key, opts \\ []) do
     {query_module, store_module, tasks_executor_mod} = mods
 
+    opts = normalized_opts(query_module, opts)
     hit_or_miss = get(store_module, req_key, opts)
 
     case hit_or_miss do
@@ -65,6 +65,8 @@ defmodule Spoxy.Cache do
   end
 
   def get(store_module, req_key, opts \\ []) do
+    opts = with_table_name(opts)
+
     {:ok, table_name} = Keyword.fetch(opts, :table_name)
     lookup = lookup_req(store_module, table_name, req_key)
 
@@ -75,6 +77,8 @@ defmodule Spoxy.Cache do
   end
 
   def refresh_req!({query_module, store_module}, req, req_key, opts) do
+    opts = normalized_opts(query_module, opts)
+
     case do_req(query_module, req) do
       {{:ok, resp}, :active} ->
         {:ok, table_name} = Keyword.fetch(opts, :table_name)
@@ -128,5 +132,23 @@ defmodule Spoxy.Cache do
 
   def enqueue_req(tasks_executor_mod, req_key, req, opts) do
     tasks_executor_mod.enqueue_task(req_key, [req, opts])
+  end
+
+  defp normalized_opts(query_module, opts) do
+    if Keyword.has_key?(opts, :table_name) do
+      opts
+    else
+      Keyword.put(opts, :table_name, Atom.to_string(query_module))
+    end
+  end
+
+  defp with_table_name(opts) do
+    if Keyword.has_key?(opts, :table_name) do
+      opts
+    else
+      {:ok, query_module} = Keyword.fetch(opts, :query_module)
+
+      Keyword.put(opts, :table_name, Atom.to_string(query_module))
+    end
   end
 end

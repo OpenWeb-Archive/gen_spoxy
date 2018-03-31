@@ -244,4 +244,21 @@ defmodule GenSpoxy.Cache.Tests do
     # data is stale
     assert SampleCache.should_invalidate?(req, resp, metadata)
   end
+
+  test "`table_name` fallbacks to query module" do
+    req = ["req-cache-test-1", "newest"]
+
+    resp =
+      SampleCache.get_or_fetch(
+        req,
+        do_janitor_work: false,
+        blocking: true,
+        ttl_ms: 200
+      )
+
+    assert {:ok, "response for [\"req-cache-test-1\", \"newest\"]"} = resp
+
+    resp = SampleCache.get(req, query_module: SampleQuery)
+    assert {:hit, {"response for [\"req-cache-test-1\", \"newest\"]", %{}}} = resp
+  end
 end
