@@ -11,7 +11,7 @@ defmodule GenSpoxy.Query.PeriodicTasksExecutor do
 
       def execute_tasks!(_req_key, []), do: :ok
 
-      def execute_tasks!(req_key, [task|_]=_req_tasks) do
+      def execute_tasks!(req_key, [task | _] = _req_tasks) do
         [req, opts] = task
 
         # since all `_req_tasks` are exactly the same (since all have the same `req_key`)

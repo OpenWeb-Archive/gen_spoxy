@@ -33,7 +33,6 @@ defmodule GenSpoxy.Query.StressTests do
       {{:ok, "response for [\"query-stress-1\", \"newest\"]"}, :passive} = Task.await(task)
     end)
 
-    {{:ok, "response for [\"query-stress-1\", \"newest\"]"}, :active} =
-      Task.await(active_task)
+    {{:ok, "response for [\"query-stress-1\", \"newest\"]"}, :active} = Task.await(active_task)
   end
 end

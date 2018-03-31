@@ -32,13 +32,15 @@ defmodule SampleQuery do
 
   @impl true
   def calc_req_key(req) do
-    Enum.join(req, "-")
+    {:ok, url} = Map.fetch(req, :url)
+    {:ok, platform} = Map.fetch(req, :platform)
+
+    Enum.join([url, platform], "-")
   end
 end
 
 # usage
 opts = [
-  table_name: "sample-table",
   do_janitor_work: true, # whether we garbage collect expired data
   ttl_ms: 5_000 # the data is considered non-stale for 5 seconds
 ]
