@@ -1,5 +1,12 @@
 ## Changelog
 
+## v0.0.14-beta.3
+`GenCache` - adding a new method: `get_and_trigger_async_fetch`
+this method lookups the cache and returns immediately.
+
+in case there's a cache miss or stale data
+it enqueues a refresh task in the backgrund before returning
+
 ## v0.0.14-beta.2
 prerender periodic tasks executor optimization
 
