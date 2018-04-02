@@ -5,7 +5,6 @@ defmodule Spoxy.Cache do
   if the cached data is in the cache but with stale data,
   the cached data will be returned when executed within `non-blocking` mode.
 
-
   when the request isn't in the cache, trigger a calculation (called prerender)
   and stores the result for later usage.
   """
@@ -46,9 +45,7 @@ defmodule Spoxy.Cache do
             # we'll spawn a background task in a fire-and-forget manner
             # that will make sure the stale data is refreshed
             # so that future requests, will benefit from a fresh data
-            Task.start(fn ->
-              enqueue_req(tasks_executor_mod, req_key, req, opts)
-            end)
+            enqueue_req(tasks_executor_mod, req_key, req, opts)
 
             # returning the stale data
             {:ok, resp}
@@ -61,6 +58,31 @@ defmodule Spoxy.Cache do
       {:miss, _} ->
         # we have nothing in the cache, we need to calculate the request's value
         refresh_req!({prerender_module, store_module}, req, req_key, opts)
+    end
+  end
+
+  def get_and_trigger_async_fetch(mods, req, req_key, opts \\ []) do
+    {_prerender_module, store_module, tasks_executor_mod} = mods
+
+    hit_or_miss = get(store_module, req_key, opts)
+
+    case hit_or_miss do
+      {:hit, {resp, metadata}} ->
+        if should_invalidate?(req, resp, metadata) do
+          # we have stale data in the cache...
+          # we trigger a refresh in the background
+          enqueue_req(tasks_executor_mod, req_key, req, opts)
+
+          {:ok, resp}
+        else
+          # we have a fresh data
+          {:ok, resp}
+        end
+
+      {:miss, _} ->
+        enqueue_req(tasks_executor_mod, req_key, req, opts)
+
+        {:miss, "couldn't locate in cache"}
     end
   end
 
@@ -127,6 +149,8 @@ defmodule Spoxy.Cache do
   end
 
   def enqueue_req(tasks_executor_mod, req_key, req, opts) do
-    tasks_executor_mod.enqueue_task(req_key, [req, opts])
+    Task.start(fn ->
+      tasks_executor_mod.enqueue_task(req_key, [req, opts])
+    end)
   end
 end

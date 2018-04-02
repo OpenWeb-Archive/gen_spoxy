@@ -47,6 +47,19 @@ defmodule GenSpoxy.Cache do
 
       @doc """
       receives a request `req`, determines it's signature (a.k.a `req_key`),
+      then it fetches the local cache. it returns `nil` in case there is nothing in cache
+
+      if the cache is empty or the data is stale a background fetch task is issued
+      """
+      def get_and_trigger_async_fetch(req, opts \\ []) do
+        req_key = calc_req_key(req)
+        mods = {@prerender_module, @store_module, @tasks_executor_mod}
+
+        Cache.get_and_trigger_async_fetch(mods, req, req_key, opts)
+      end
+
+      @doc """
+      receives a request `req`, determines it's signature (a.k.a `req_key`),
       then it fetches the local cache. it returns `nil` in case there is nothing in cache,
       else returns the cached entry
       """

@@ -1,7 +1,7 @@
 defmodule GenPrerender.MixProject do
   use Mix.Project
 
-  @version "0.0.14-beta.2"
+  @version "0.0.14-beta.3"
 
   @description "caching made fun!"
 

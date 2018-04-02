@@ -8,11 +8,18 @@ defmodule GenSpoxy.Cache.Tests do
   defprerender(SamplePrerender, do_req: fn req -> {:ok, "response for #{inspect(req)}"} end)
 
   defmodule SampleCache do
-    use GenSpoxy.Cache, prerender_module: SamplePrerender
+    use GenSpoxy.Cache,
+      prerender_module: SamplePrerender,
+      config: [
+        periodic_sampling_interval: 50,
+        periodic_total_partitions: 1
+      ]
   end
 
   setup_all do
     SamplePrerender.Supervisor.start_link()
+    SampleCache.TasksExecutor.Supervisor.start_link()
+
     :ok
   end
 
@@ -243,5 +250,19 @@ defmodule GenSpoxy.Cache.Tests do
 
     # data is stale
     assert SampleCache.should_invalidate?(req, resp, metadata)
+  end
+
+  test "doing a cache lookup and before returning, triggers a fetch in the background for the benefit of future requests" do
+    table_name = "table-prerender-cache-test-6"
+    req = ["req-cache-test-6", "newest"]
+
+    assert {:miss, _reason} =
+             SampleCache.get_and_trigger_async_fetch(req, table_name: table_name, ttl_ms: 4000)
+
+    :timer.sleep(300)
+
+    resp = SampleCache.get(req, table_name: table_name)
+
+    assert {:hit, {"response for [\"req-cache-test-6\", \"newest\"]", %{version: _}}} = resp
   end
 end
