@@ -1,5 +1,11 @@
 # GenSpoxy
 
+## DEPRECATION WARNING
+
+**This package is now deprecated in favor of [Shielded Cache](https://github.com/SpotIM/shielded-cache). It is no longer being used in production nor is it being maintained.**
+
+## Package Information
+
 the `GenSpoxy` package consist of battle-tested abstractions that help creating in-memory caching
 
 ### Advantages of `GenSpoxy`:
